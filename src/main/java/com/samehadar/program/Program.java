@@ -74,7 +74,9 @@ public class Program {
         Integer p = new Integer("11337409");
         Integer g = new Integer("7");
         Integer x = (int)(Math.random() * 10000000);
-        ElgamalShema cipherAlice = new ElgamalShema(p, g, x);
+        //ElgamalShema cipherAlice = new ElgamalShema(p, g, x);
+        ElgamalShema cipherAlice = new ElgamalShema();
+        Map<String, Integer> key = cipherAlice.generateKey(p , g, x);
         System.out.println("Создали шифратор.");
 
         BigInteger rA = BigInteger.probablePrime(25, new Random(303));
@@ -82,8 +84,8 @@ public class Program {
         System.out.println(rA);
 
         //BigInteger openKeyBob = BigInteger.probablePrime(20, new Random(5));
-        writer.println(cipherAlice.p + "," + cipherAlice.g + "," + cipherAlice.y);
-        System.out.println(String.format("Отправлен открытый ключ: (%s,%s,%s)", cipherAlice.p, cipherAlice.g, cipherAlice.y));
+        writer.println(key.get("p") + "," + key.get("g") + "," + key.get("y"));
+        System.out.println(String.format("Отправлен открытый ключ: (%s,%s,%s)", key.get("p"), key.get("g"), key.get("y")));
 
         //BigInteger openKeyAlice = new BigInteger(reader.readLine());
         String[] keyBob = reader.readLine().split(",");
@@ -108,6 +110,7 @@ public class Program {
         Integer partB = Integer.parseInt(reader.readLine());
         System.out.println("Получили от Боба вторую часть зашифрованного сообщения: " + partB);
 
+        //TODO:: возможно что ошибка в том, что я расшифровываю своими ключами, а не Боба!
         Integer bobMessage = cipherAlice.decryption(partA, partB);
         System.out.println("Расшифрованное сообщение Боба: " + bobMessage);
 //TODO:: переписать все через BigInteger

@@ -5,19 +5,40 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ElgamalShema {
+public class ElgamalShema implements KeyGen<Map> {
 
-    public Integer p;
-    public Integer g;
-    public Integer y;
-
+    private Integer p;
+    private Integer g;
+    private Integer y;
     private Integer x;
+    Map<String, Integer> keys;
+
+    /**
+     * Default constructor
+     */
+    public ElgamalShema() {}
 
     public ElgamalShema(Integer p, Integer g, Integer x){
         this.p = p;
         this.g = g;
         this.x = x;
         this.y = exp(g, x, p);
+    }
+
+    @Override
+    public Map<String, Integer> generateKey(Object... args) {
+        this.p = (Integer)args[0];
+        this.g = (Integer)args[1];
+        this.x = (Integer)args[2];
+        Integer y = exp(g, x, p);
+        this.y = y;
+        this.keys = new HashMap<String, Integer>() {{
+            put("p", (Integer) args[0]);
+            put("g", (Integer) args[1]);
+            put("x", (Integer) args[2]);
+            put("y", y);
+        }};
+        return keys;
     }
 
     //e^x mod m
@@ -28,19 +49,13 @@ public class ElgamalShema {
         return result.intValue();
     }
 
-    //Return (p, g, y) - open key
-    public Map<String, Integer> getOpenKey(){
-        Map<String, Integer> returnedList = new HashMap<>();
-        returnedList.put("p", p);
-        returnedList.put("g", g);
-        returnedList.put("y", y);
-        return returnedList;
+    /**
+     * Return open and close keys
+     * @return HashMap that contains (p, g, y, x)
+     */
+    public Map<String, Integer> getKeys(){
+        return this.keys;
     }
-
-    public Integer getCloseKey(){
-        return x;
-    }
-
 
     public Map<String, Integer> encryption(Integer M) {
         //Выбирается сессионный ключ — случайное целое число k такое, что 1<k<p-1
@@ -73,6 +88,4 @@ public class ElgamalShema {
         result.put("b", b.intValue());
         return result;
     }
-
-
 }
