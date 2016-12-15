@@ -1,5 +1,6 @@
 package com.samehadar.program;
 
+import com.samehadar.program.cipher.CesarWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
 
 import java.io.BufferedReader;
@@ -16,12 +17,11 @@ import java.util.Scanner;
 
 public class Program {
     static Channel channel;
-
     static InetSocketAddress address;
-
     public static String destinationIP;
-
     public static String sessionKey = null;
+
+    public static CesarWithoutMod cesar;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
@@ -42,6 +42,7 @@ public class Program {
         channel.bind(sourcePort);
         channel.start();
 
+        cesar = new CesarWithoutMod();
         System.out.println("Started.");
 
         address = new InetSocketAddress(destinationIP, destinationPort);
@@ -55,7 +56,7 @@ public class Program {
             }
 
             message = name + " >> " + message;
-            String messageForSending = encrypt(sessionKey, message);
+            String messageForSending = cesar.encrypt(sessionKey, message);
 
             channel.sendTo(address, messageForSending);
         }
@@ -119,7 +120,6 @@ public class Program {
         BigInteger partB = new BigInteger(reader.readLine());
         System.out.println("Получили от Боба вторую часть зашифрованного сообщения: " + partB);
 
-        //TODO:: возможно что ошибка в том, что я расшифровываю своими ключами, а не Боба!
         Map<String, BigInteger> abBob = new HashMap<>();
         abBob.put("a", partA);
         abBob.put("b", partB);
@@ -137,19 +137,4 @@ public class Program {
         serverSocket.close();
         System.out.println("Тайное соединение закрыто");
     }
-
-    public static String encrypt(String key, String message) {
-        if (sessionKey == null) {
-            return message;
-        } else {
-            char[] keys = sessionKey.toCharArray();
-            char[] messageByte = message.toCharArray();
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < messageByte.length; i++) {
-                result.append((char)(messageByte[i] + keys[i % key.length()]));
-            }
-            return result.toString();
-        }
-    }
-
 }

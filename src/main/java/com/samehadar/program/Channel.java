@@ -1,5 +1,6 @@
 package com.samehadar.program;
 
+import com.samehadar.program.cipher.CesarWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
 
 import java.io.BufferedReader;
@@ -19,6 +20,10 @@ public class Channel implements Runnable {
     private boolean running;
 
     public static String sessionKey = null;
+    public static CesarWithoutMod cesar;
+    static {
+        cesar = new CesarWithoutMod();
+    }
 
     public void bind(int port) throws SocketException {
         socket = new DatagramSocket(port);
@@ -44,7 +49,7 @@ public class Channel implements Runnable {
                 socket.receive(packet);
 
                 String message = new String(buffer, 0, packet.getLength());
-                message = decrypt(sessionKey, message);
+                message = cesar.decrypt(sessionKey, message);
 
                 if (message.equals("protocol_1_3")) {
                     realizeProtocol();
@@ -129,19 +134,5 @@ public class Channel implements Runnable {
         reader.close();
         writer.close();
         System.out.println("Тайное соединение закрыто");
-    }
-
-    public static String decrypt(String key, String encryptedMessage) {
-        if (sessionKey == null) {
-            return encryptedMessage;
-        } else {
-            char[] keys = sessionKey.toCharArray();
-            char[] messageByte = encryptedMessage.toCharArray();
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < messageByte.length; i++) {
-                result.append((char)(messageByte[i] - keys[i % key.length()]));
-            }
-            return result.toString();
-        }
     }
 }
