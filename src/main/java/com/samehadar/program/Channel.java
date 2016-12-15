@@ -18,6 +18,8 @@ public class Channel implements Runnable {
     private DatagramSocket socket;
     private boolean running;
 
+    public static String sessionKey = null;
+
     public void bind(int port) throws SocketException {
         socket = new DatagramSocket(port);
     }
@@ -42,6 +44,8 @@ public class Channel implements Runnable {
                 socket.receive(packet);
 
                 String message = new String(buffer, 0, packet.getLength());
+                message = decrypt(sessionKey, message);
+
                 if (message.equals("protocol_1_3")) {
                     realizeProtocol();
                 }
@@ -80,9 +84,9 @@ public class Channel implements Runnable {
         System.out.println(key);
 
         //BigInteger rA = BigInteger.probablePrime(25, cipherBob.getSecureRandom());
-        BigInteger rA = new BigInteger("123125125");
+        BigInteger rB = new BigInteger("123125125");
         System.out.print("Сгенерировали свою часть сессионного ключа: ");
-        System.out.println("rA = " + rA);
+        System.out.println("rB = " + rB);
 
         String[] keyAlice = reader.readLine().split(",");
         BigInteger pAlice = new BigInteger(keyAlice[0]);
@@ -99,7 +103,7 @@ public class Channel implements Runnable {
         BigInteger partA = new BigInteger(reader.readLine());
         System.out.println("Получили от Алисы первую часть зашифрованного сообщения: " + partA);
 
-        Map<String, BigInteger> ab = cipherBob.encrypt(rA.toString(), openKeysAlice);
+        Map<String, BigInteger> ab = cipherBob.encrypt(rB.toString(), openKeysAlice);
         System.out.println("Зашифровали сообщение открытым ключом Алисы");
         System.out.println("result = " + ab);
 
@@ -118,8 +122,26 @@ public class Channel implements Runnable {
         String aliceMessage = cipherBob.decrypt(cipherBob.concatenateCipherText(abAlice), key);
         System.out.println("Расшифрованное сообщение Алисы: " + aliceMessage);
 
+        BigInteger rA = new BigInteger(aliceMessage);
+        sessionKey = rA.xor(rB).toString();
+        System.out.println("Ключ сессии: " + sessionKey);
+
         reader.close();
         writer.close();
         System.out.println("Тайное соединение закрыто");
+    }
+
+    public static String decrypt(String key, String encryptedMessage) {
+        if (sessionKey == null) {
+            return encryptedMessage;
+        } else {
+            char[] keys = sessionKey.toCharArray();
+            char[] messageByte = encryptedMessage.toCharArray();
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < messageByte.length; i++) {
+                result.append((char)(messageByte[i] - keys[i % key.length()]));
+            }
+            return result.toString();
+        }
     }
 }

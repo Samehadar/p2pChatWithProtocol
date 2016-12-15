@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -18,6 +20,8 @@ public class Program {
     static InetSocketAddress address;
 
     public static String destinationIP;
+
+    public static String sessionKey = null;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
@@ -50,10 +54,10 @@ public class Program {
                 realizeProtocol();
             }
 
-            String messageForSending = name + " >> " + message;
+            message = name + " >> " + message;
+            String messageForSending = encrypt(sessionKey, message);
 
             channel.sendTo(address, messageForSending);
-            System.out.println(messageForSending); // remove duplicate string
         }
 
         scanner.close();
@@ -122,10 +126,30 @@ public class Program {
         String bobMessage = cipherAlice.decrypt(cipherAlice.concatenateCipherText(abBob), key);
         System.out.println("Расшифрованное сообщение Боба: " + bobMessage);
 
+        //calculate session key rA xor rB
+        BigInteger rB = new BigInteger(bobMessage);
+        sessionKey = rA.xor(rB).toString();
+        System.out.println("Ключ сессии: " + sessionKey);
+
         reader.close();
         writer.close();
         clientSocket.close();
         serverSocket.close();
         System.out.println("Тайное соединение закрыто");
     }
+
+    public static String encrypt(String key, String message) {
+        if (sessionKey == null) {
+            return message;
+        } else {
+            char[] keys = sessionKey.toCharArray();
+            char[] messageByte = message.toCharArray();
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < messageByte.length; i++) {
+                result.append((char)(messageByte[i] + keys[i % key.length()]));
+            }
+            return result.toString();
+        }
+    }
+
 }
