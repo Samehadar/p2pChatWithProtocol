@@ -1,6 +1,6 @@
 package com.samehadar.program;
 
-import com.samehadar.program.cipher.ElgamalShema;
+import com.samehadar.program.cipher.ELGamalSchema;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,10 +8,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.*;
-import java.text.Format;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Created by User on 07.12.2016.
@@ -70,7 +68,7 @@ public class Channel implements Runnable {
         PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
         System.out.println("Установлено тайное соединение.");
 
-        ElgamalShema cipherBob = new ElgamalShema();
+        ELGamalSchema cipherBob = new ELGamalSchema();
 //        BigInteger p = new BigInteger("11337409");
         BigInteger p = BigInteger.probablePrime(64, cipherBob.getSecureRandom());
         BigInteger g = new BigInteger("3");

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class ElgamalShema implements KeyGen<Map>, Cypher<Map, Map> {
+public class ELGamalSchema implements KeyGen<Map>, Cypher<Map, Map> {
 
     private BigInteger p;
     private BigInteger g;
@@ -19,7 +19,7 @@ public class ElgamalShema implements KeyGen<Map>, Cypher<Map, Map> {
     /**
      * Default constructor
      */
-    public ElgamalShema() {
+    public ELGamalSchema() {
         this.secureRandom = new SecureRandom();
     }
 
@@ -90,7 +90,7 @@ public class ElgamalShema implements KeyGen<Map>, Cypher<Map, Map> {
     }
 
     public String concatenateCipherText(Map<String, BigInteger> ab) {
-        return ab.get("a")+ "|" + ab.get("b");
+        return ab.get("a") + "|" + ab.get("b");
     }
 
     /**
@@ -101,7 +101,6 @@ public class ElgamalShema implements KeyGen<Map>, Cypher<Map, Map> {
     }
 
     private BigInteger createBigIntegerLowThanP(BigInteger p) {
-        //TODO:: change logic to normal
         Integer startBit = 64;
         BigInteger result = new BigInteger(startBit, this.secureRandom);
         while (result.compareTo(p) != -1) {

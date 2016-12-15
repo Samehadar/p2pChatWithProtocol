@@ -1,6 +1,6 @@
 package com.samehadar.program;
 
-import com.samehadar.program.cipher.ElgamalShema;
+import com.samehadar.program.cipher.ELGamalSchema;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,7 +10,6 @@ import java.math.BigInteger;
 import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.Scanner;
 
 public class Program {
@@ -72,7 +71,7 @@ public class Program {
         PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
         System.out.println("Установлено тайное соединение");
 
-        ElgamalShema cipherAlice = new ElgamalShema();
+        ELGamalSchema cipherAlice = new ELGamalSchema();
         //BigInteger p = new BigInteger("11337409");
         BigInteger p = BigInteger.probablePrime(64, cipherAlice.getSecureRandom());
         BigInteger g = new BigInteger("3");
