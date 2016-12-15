@@ -5,5 +5,9 @@ package com.samehadar.program.cipher;
  */
 public interface KeyGen<TKey> {
 
+    /**
+     * Generates key
+     * @return TKey generated key
+     */
     TKey generateKey(Object ... args);
 }

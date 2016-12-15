@@ -74,7 +74,7 @@ public class Channel implements Runnable {
         Integer x = (int)(Math.random() * 10000000);
         //ElgamalShema cipherBob = new ElgamalShema(p, g, x);
         ElgamalShema cipherBob = new ElgamalShema();
-        Map<String, Integer> key = cipherBob.generateKey(p, g, x);
+        Map<String, Long> key = cipherBob.generateKey(p, g, x);
         System.out.println("Создали шифратор.");
 
         BigInteger rA = BigInteger.probablePrime(25, new Random(37));
@@ -96,7 +96,7 @@ public class Channel implements Runnable {
         Integer partA = Integer.parseInt(reader.readLine());
         System.out.println("Получили от Алисы первую часть зашифрованного сообщения: " + partA);
 
-        Map<String, Integer> ab = cipherBob.encryption(rA.intValue(), pAlice, gAlice, yAlice, k);
+        Map<String, Long> ab = cipherBob.encryption(rA.intValue(), pAlice, gAlice, yAlice, k);
         System.out.println("Зашифровали сообщение открытым ключом Алисы");
 
         writer.println(ab.get("a"));

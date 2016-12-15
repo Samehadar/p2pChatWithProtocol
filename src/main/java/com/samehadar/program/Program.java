@@ -76,7 +76,7 @@ public class Program {
         Integer x = (int)(Math.random() * 10000000);
         //ElgamalShema cipherAlice = new ElgamalShema(p, g, x);
         ElgamalShema cipherAlice = new ElgamalShema();
-        Map<String, Integer> key = cipherAlice.generateKey(p , g, x);
+        Map<String, Long> key = cipherAlice.generateKey(p , g, x);
         System.out.println("Создали шифратор.");
 
         BigInteger rA = BigInteger.probablePrime(25, new Random(303));
@@ -95,7 +95,7 @@ public class Program {
         System.out.println(String.format("Получен открытый ключ: (%s,%s,%s)", pBob, gBob, yBob));
         Integer k = (int)(Math.random() * 10000000); //change
 
-        Map<String, Integer> ab = cipherAlice.encryption(rA.intValue(), pBob, gBob, yBob, k);
+        Map<String, Long> ab = cipherAlice.encryption(rA.intValue(), pBob, gBob, yBob, k);
         System.out.println("Зашифровали сообщение открытым ключом Боба");
 
         writer.println(ab.get("a"));
