@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
@@ -71,46 +72,57 @@ public class Program {
         PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
         System.out.println("Установлено тайное соединение");
 
-        Integer p = new Integer("11337409");
-        Integer g = new Integer("7");
-        Integer x = (int)(Math.random() * 10000000);
-        ElgamalShema cipherAlice = new ElgamalShema(p, g, x);
-        System.out.println("Создали шифратор.");
+        ElgamalShema cipherAlice = new ElgamalShema();
+        //BigInteger p = new BigInteger("11337409");
+        BigInteger p = BigInteger.probablePrime(64, cipherAlice.getSecureRandom());
+        BigInteger g = new BigInteger("3");
+        //BigInteger x = BigInteger.probablePrime(25, cipherAlice.getSecureRandom());
+        BigInteger x = new BigInteger("12345678901234567890");
+        Map<String, BigInteger> key = cipherAlice.generateKey(p , g, x);
+        System.out.println("Создали шифратор и сгенерировали ключи");
+        System.out.println(key);
 
-        BigInteger rA = BigInteger.probablePrime(25, new Random(303));
+        BigInteger rA = BigInteger.probablePrime(30, cipherAlice.getSecureRandom());
+//        BigInteger rA = new BigInteger("123125125");
         System.out.print("Сгенерировали свою часть сессионного ключа: ");
         System.out.println(rA);
 
         //BigInteger openKeyBob = BigInteger.probablePrime(20, new Random(5));
-        writer.println(cipherAlice.p + "," + cipherAlice.g + "," + cipherAlice.y);
-        System.out.println(String.format("Отправлен открытый ключ: (%s,%s,%s)", cipherAlice.p, cipherAlice.g, cipherAlice.y));
+        writer.println(key.get("p") + "," + key.get("g") + "," + key.get("y"));
+        System.out.println(String.format("Отправлен открытый ключ: (%s,%s,%s)", key.get("p"), key.get("g"), key.get("y")));
 
         //BigInteger openKeyAlice = new BigInteger(reader.readLine());
         String[] keyBob = reader.readLine().split(",");
-        Integer pBob = Integer.parseInt(keyBob[0]);
-        Integer gBob = Integer.parseInt(keyBob[1]);
-        Integer yBob = Integer.parseInt(keyBob[2]);
-        System.out.println(String.format("Получен открытый ключ: (%s,%s,%s)", pBob, gBob, yBob));
-        Integer k = (int)(Math.random() * 10000000); //change
+        BigInteger pBob = new BigInteger(keyBob[0]);
+        BigInteger gBob = new BigInteger(keyBob[1]);
+        BigInteger yBob = new BigInteger(keyBob[2]);
+        System.out.println(String.format("Получен открытый ключ Боба: (%s,%s,%s)", pBob, gBob, yBob));
+        Map<String, BigInteger> openKeysBob = new HashMap<String, BigInteger>() {{put("p", pBob); put("g", gBob); put("y", yBob);}};
+        System.out.println(openKeysBob);
 
-        Map<String, Integer> ab = cipherAlice.encryption(rA.intValue(), pBob, gBob, yBob, k);
+        Map<String, BigInteger> ab = cipherAlice.encrypt(rA.toString(), openKeysBob);
         System.out.println("Зашифровали сообщение открытым ключом Боба");
+        System.out.println("result = " + ab);
 
         writer.println(ab.get("a"));
         System.out.println("Отправили Бобу часть \"a\"");
 
-        Integer partA = Integer.parseInt(reader.readLine());
+        BigInteger partA = new BigInteger(reader.readLine());
         System.out.println("Получили от Боба первую часть зашифрованного сообщения: " + partA);
 
         writer.println(ab.get("b"));
         System.out.println("Отправили Бобу часть \"b\"");
 
-        Integer partB = Integer.parseInt(reader.readLine());
+        BigInteger partB = new BigInteger(reader.readLine());
         System.out.println("Получили от Боба вторую часть зашифрованного сообщения: " + partB);
 
-        Integer bobMessage = cipherAlice.decryption(partA, partB);
+        //TODO:: возможно что ошибка в том, что я расшифровываю своими ключами, а не Боба!
+        Map<String, BigInteger> abBob = new HashMap<>();
+        abBob.put("a", partA);
+        abBob.put("b", partB);
+        String bobMessage = cipherAlice.decrypt(cipherAlice.concatenateCipherText(abBob), key);
         System.out.println("Расшифрованное сообщение Боба: " + bobMessage);
-//TODO:: переписать все через BigInteger
+
         reader.close();
         writer.close();
         clientSocket.close();
