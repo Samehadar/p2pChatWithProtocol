@@ -21,8 +21,8 @@ import static org.powermock.api.support.membermodification.MemberMatcher.method;
  * Tests for ElgamalSchema
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(ElgamalShema.class)
-public class ElgamalShemaTest {
+@PrepareForTest(ELGamalSchema.class)
+public class ELGamalSchemaTest {
     @org.junit.Before
     public void setUp() throws Exception {
 
@@ -33,11 +33,11 @@ public class ElgamalShemaTest {
     //For example, p = 11, g = 2, x = 8, k = 9
     @Test
     public void Should_TrueEncryption() throws Exception {
-        ElgamalShema schema = spy(new ElgamalShema());
+        ELGamalSchema schema = spy(new ELGamalSchema());
         String openText = "5";
         Map<String, BigInteger> keys = schema.generateKey(11, 2, 8);
         BigInteger k = new BigInteger("9");
-        when(schema, method(ElgamalShema.class, "createBigIntegerLowThanP", BigInteger.class)).withArguments(any()).thenReturn(k);
+        when(schema, method(ELGamalSchema.class, "createBigIntegerLowThanP", BigInteger.class)).withArguments(new BigInteger("11")).thenReturn(k);
         Map<String, Integer> ab = schema.encrypt(openText, keys);
         assertEquals(ab.get("a"), new BigInteger("6"));
         assertEquals(ab.get("b"), new BigInteger("9"));
@@ -47,7 +47,7 @@ public class ElgamalShemaTest {
     @Test
     public void Should_TrueDecryption() {
         Map<String, BigInteger> ab = new HashMap<String, BigInteger>() {{put("a", new BigInteger("6")); put("b", new BigInteger("9"));}};
-        ElgamalShema schema = new ElgamalShema();
+        ELGamalSchema schema = new ELGamalSchema();
         Map<String, BigInteger> keys = schema.generateKey(11, 2, 8);
         String openText  = schema.decrypt(schema.concatenateCipherText(ab), keys);
         assertEquals(openText, "5");
@@ -57,7 +57,7 @@ public class ElgamalShemaTest {
 
     @Test
     public void Should_EncAndDecCorrect() throws Exception {
-        ElgamalShema schema = spy(new ElgamalShema());
+        ELGamalSchema schema = spy(new ELGamalSchema());
         BigInteger p = new BigInteger("2539");
         BigInteger g = new BigInteger("490");
         String openText = "81";
@@ -68,7 +68,7 @@ public class ElgamalShemaTest {
         System.out.println(keys);
         BigInteger k = new BigInteger("171");
         System.out.println("k = " + k);
-        when(schema, method(ElgamalShema.class, "createBigIntegerLowThanP", BigInteger.class)).withArguments(any()).thenReturn(k);
+        when(schema, method(ELGamalSchema.class, "createBigIntegerLowThanP", BigInteger.class)).withArguments(p).thenReturn(k);
         Map<String, BigInteger> ab = schema.encrypt(openText, keys);
         System.out.println(ab);
         String decrText = schema.decrypt(schema.concatenateCipherText(ab), keys);
@@ -78,7 +78,7 @@ public class ElgamalShemaTest {
 
     @Test
     public void Should_EncAndDecCorrect_onRandomBigIntegers() throws Exception {
-        ElgamalShema schema = spy(new ElgamalShema());
+        ELGamalSchema schema = spy(new ELGamalSchema());
         BigInteger p, g, x, k;
         Random sc = new SecureRandom();
         p = BigInteger.probablePrime(64, sc);
@@ -91,7 +91,7 @@ public class ElgamalShemaTest {
         System.out.println(keys);
         k = new BigInteger(64, sc);
         System.out.println("k = " + k);
-        when(schema, method(ElgamalShema.class, "createBigIntegerLowThanP", BigInteger.class)).withArguments(any()).thenReturn(k);
+        when(schema, method(ELGamalSchema.class, "createBigIntegerLowThanP", BigInteger.class)).withArguments(p).thenReturn(k);
         Map<String, BigInteger> ab = schema.encrypt(openText, keys);
         System.out.println(ab);
         String decrText = schema.decrypt(schema.concatenateCipherText(ab), keys);
