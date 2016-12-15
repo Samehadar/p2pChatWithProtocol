@@ -1,33 +1,39 @@
 package com.samehadar.program.cipher;
 
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
-public class ElgamalShema implements KeyGen<Map>, Encryptor<Map, Map> {
+public class ElgamalShema implements KeyGen<Map>, Cypher<Map, Map> {
 
-    private Long p;
-    private Long g;
-    private Long y;
-    private Long x;
-    Map<String, Long> keys;
+    private BigInteger p;
+    private BigInteger g;
+    private BigInteger y;
+    private BigInteger x;
+    Map<String, BigInteger> keys;
+
+    private Random secureRandom;
 
     /**
      * Default constructor
      */
-    public ElgamalShema() {}
+    public ElgamalShema() {
+        this.secureRandom = new SecureRandom();
+    }
 
     @Override
-    public Map<String, Long> generateKey(Object... args) {
-        this.p = (Long)args[0];
-        this.g = (Long)args[1];
-        this.x = (Long)args[2];
-        Long y = exp(g, x, p);
+    public Map<String, BigInteger> generateKey(Object... args) {
+        this.p = parseBigInteger(args[0]);
+        this.g = parseBigInteger(args[1]);
+        this.x = parseBigInteger(args[2]);
+        BigInteger y = exp(g, x, p);
         this.y = y;
-        this.keys = new HashMap<String, Long>() {{
-            put("p", (Long) args[0]);
-            put("g", (Long) args[1]);
-            put("x", (Long) args[2]);
+        this.keys = new HashMap<String, BigInteger>() {{
+            put("p", parseBigInteger(args[0]));
+            put("g", parseBigInteger(args[1]));
+            put("x", parseBigInteger(args[2]));
             put("y", y);
         }};
         return keys;
@@ -37,115 +43,87 @@ public class ElgamalShema implements KeyGen<Map>, Encryptor<Map, Map> {
      * Returns open and close keys
      * @return HashMap that contains (p, g, y, x)
      */
-    public Map<String, Long> getCipherKeys(){
+    public Map<String, BigInteger> getCipherKeys(){
         return this.keys;
+    }
+
+    /**
+     * Returns current secureRandom
+     * @return Random
+     */
+    public Random getSecureRandom() {
+        return this.secureRandom;
     }
 
     @Override
     public Map encrypt(String openText, Map keys) {
         //a = g^k mod p
         //b = (y^k) * M mod p
-        Long g = (Long)keys.get("g");
-        Long p = (Long)keys.get("p");
-        Long y = (Long)keys.get("y");
-        //TODO:: rename
-        Long k = createIntegerLowThanP(p);
-        Long a = exp(g, k, p);
+        BigInteger g = (BigInteger)keys.get("g");
+        BigInteger p = (BigInteger)keys.get("p");
+        BigInteger y = (BigInteger)keys.get("y");
+        BigInteger m = new BigInteger(openText);
+        BigInteger k = createBigIntegerLowThanP(p);
+        BigInteger a = exp(g, k, p);
 
-       // BigInteger b = new BigInteger(y.toString()).pow(k).multiply(new BigInteger(openText)).mod(new BigInteger(p.toString()));
+        BigInteger b = m.multiply(y.modPow(k, p)).mod(p);
 
-        BigInteger b = new BigInteger(y.toString());
-        b = b.modPow(new BigInteger(k.toString()), new BigInteger(p.toString()));
-        b = b.multiply(new BigInteger(openText)).mod(new BigInteger(p.toString()));
-//        BigInteger b = BigInteger.valueOf(y);
-//        b = b.modPow(BigInteger.valueOf(k), BigInteger.valueOf(p));
-//        b = b.multiply(new BigInteger(openText)).mod(BigInteger.valueOf(p));
-
-
-        Map<String, Long> result = new HashMap<>();
+        Map<String, BigInteger> result = new HashMap<>();
         result.put("a", a);
-        result.put("b", b.longValue());
+        result.put("b", b);
         return result;
     }
 
     @Override
     public String decrypt(String cipherText, Map keys) {
-        Long a = Long.parseLong(cipherText.split("\\|")[0]);
-        Long b = Long.parseLong(cipherText.split("\\|")[1]);
-        Long p = (Long)keys.get("p");
-        Long x = (Long)keys.get("x");
+        BigInteger a = new BigInteger(cipherText.split("\\|")[0]);
+        BigInteger b = new BigInteger(cipherText.split("\\|")[1]);
+        BigInteger p = (BigInteger)keys.get("p");
+        BigInteger x = (BigInteger)keys.get("x");
         //b * a^(p-1-x) mod p
+        //or b*(a)^(-1) mod p - this is used
 
-//        BigInteger result = new BigInteger(a.toString());
-//        Integer prom = p - 1 - x;
-//        BigInteger p1x = new BigInteger(prom.toString());
-//        result = result.modPow(p1x, new BigInteger(p.toString())).multiply(new BigInteger(b.toString())).mod(new BigInteger(p.toString()));
-//        return result.toString();
-
-        return exp(
-                        exp(a, p - 1 - x, p)
-                                * b, 1L, p
-                ).toString();
-        //return new BigInteger(exp(a, p - 1 - x, p).toString()).multiply(new BigInteger(b.toString())).mod(new BigInteger(p.toString())).toString();
+        BigInteger axmodp = a.modPow(x, p);
+        BigInteger aInverse = axmodp.modInverse(p);
+        BigInteger ad = aInverse.multiply(b).mod(p);
+        return ad.toString();
     }
 
-    public String concatenateCipherText(Map<String, Integer> ab) {
+    public String concatenateCipherText(Map<String, BigInteger> ab) {
         return ab.get("a")+ "|" + ab.get("b");
-    }
-
-    public Map<String, Long> encryption(Integer M) {
-        //Выбирается сессионный ключ — случайное целое число k такое, что 1<k<p-1
-        Integer k = (int)(Math.random() * 10000000); // заточено под моё P
-        return encryption(M, Integer.parseInt(this.p.toString()), Integer.parseInt(this.g.toString())
-                , Integer.parseInt(this.y.toString()), k);
-    }
-
-    //a = g^k mod p
-    //b = (y^k) * M mod p
-    public Map<String, Long> encryption(Integer M, Integer p, Integer g, Integer y, Integer k) {
-        Long a = exp(Long.parseLong(g.toString()), Long.parseLong(k.toString()), Long.parseLong(p.toString()));
-//        Integer b = exp(
-//                exp(y, k, p)
-//                        * M, 1, p
-//        );
-        BigInteger b = new BigInteger(y.toString());
-        b = b.modPow(new BigInteger(k.toString()), new BigInteger(p.toString()));
-        b = b.multiply(new BigInteger(M.toString())).mod(new BigInteger(p.toString()));
-
-        Map<String, Long> result = new HashMap<>();
-        result.put("a", a);
-        result.put("b", b.longValue());
-        return result;
-    }
-
-    //M = b * a^(p-1-x) mod p
-    public Integer decryption(Integer a, Integer b) {
-        return Math.toIntExact(exp(
-                exp(Long.parseLong(a.toString()), this.p - 1 - this.x, this.p)
-                        * b, 1L, this.p
-        ));
     }
 
     /**
      * Returns e^x(mod m)
      */
-    public Long exp(Long e, Long x, Long m) {
-//        BigInteger result = new BigInteger(e.toString());
-//        result = result.modPow(new BigInteger(x.toString()), new BigInteger(m + ""));
-//
-//        return result.intValue();
-        BigInteger result = BigInteger.valueOf(e);
-        result = result.modPow(BigInteger.valueOf(x), BigInteger.valueOf(m));
-
-        return result.longValue();
+    private BigInteger exp(BigInteger e, BigInteger x, BigInteger m) {
+        return e.modPow(x, m);
     }
 
-    private Long createIntegerLowThanP(Long p) {
-        return (long)(Math.random() * (p - 1));
+    private BigInteger createBigIntegerLowThanP(BigInteger p) {
+        //TODO:: change logic to normal
+        Integer startBit = 64;
+        BigInteger result = new BigInteger(startBit, this.secureRandom);
+        while (result.compareTo(p) != -1) {
+            startBit--;
+            result = new BigInteger(startBit, this.secureRandom);
+        }
+        return result;
+    }
+
+    private BigInteger parseBigInteger(Object x) {
+        if (x instanceof BigInteger){
+            return (BigInteger) x;
+        } else if (x instanceof Integer) {
+            return new BigInteger((x).toString());
+        } else if (x instanceof String) {
+            return new BigInteger((String)x);
+        }
+        return null;
     }
 
     /*
-    test method for finding g
+    test method for finding g - первообразный корень для P
      protected BigInteger Calculate_g(System.Numerics.BigInteger P)
                 {
                     System.Numerics.BigInteger returnedValue = System.Numerics.BigInteger.Zero;
