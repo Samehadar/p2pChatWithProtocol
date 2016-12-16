@@ -96,6 +96,10 @@ public class Trent implements Runnable {
         return Arrays.asList(message.split("\\|"));
     }
 
+    public Random getSecureRandom() {
+        return this.secureRandom;
+    }
+
     @Override
     protected void finalize() throws Throwable {
         trent = null;

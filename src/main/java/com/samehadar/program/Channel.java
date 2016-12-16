@@ -2,6 +2,7 @@ package com.samehadar.program;
 
 import com.samehadar.program.cipher.CesarWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
+import com.samehadar.program.utils.Trent;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -88,6 +90,9 @@ public class Channel implements Runnable {
         PrintWriter aliceWriter = new PrintWriter(aliceSocket.getOutputStream(), true);
         System.out.println("Установлено тайное соединение с Алисой.");
 
+        //receive Alice
+        List<String> receive = Trent.parseMessage(aliceReader.readLine());
+        System.out.println("Получили сообщение от Алисы: " + receive);
 
         //closing streams
         trentSocket.close();

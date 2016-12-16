@@ -73,7 +73,7 @@ public class Program {
 
     public static void realizeProtocol_2_6() throws IOException {
         System.out.println("Реализация протокола Neuman-Stubblebine(Алиса)");
-        //TODO:: change if Trent wood be standalone app
+        //TODO:: change it(and all time stamp wood be receive from Trent) if Trent wood be standalone app
         String trentIP = "127.0.0.1";
         Integer trentPort = 9909;
         Trent trent = Trent.getInstance();
@@ -98,6 +98,9 @@ public class Program {
         PrintWriter bobWriter = new PrintWriter(bobSocket.getOutputStream(), true);
         System.out.println("Установлено тайное соединение с Бобом");
 
+        BigInteger rA = BigInteger.probablePrime(25, trent.getSecureRandom());
+        bobWriter.println(Trent.createMessage(nickname, rA.toString()));
+        System.out.println("Отправили Бобу никнейм и rA: " + Trent.createMessage(nickname, rA.toString()));
 
         //closing streams
         trentSocket.close();

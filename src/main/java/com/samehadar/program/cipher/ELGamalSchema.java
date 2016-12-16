@@ -1,5 +1,7 @@
 package com.samehadar.program.cipher;
 
+import com.samehadar.program.utils.KeyGen;
+
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.HashMap;
