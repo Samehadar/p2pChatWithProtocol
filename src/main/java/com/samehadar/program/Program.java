@@ -2,6 +2,8 @@ package com.samehadar.program;
 
 import com.samehadar.program.cipher.CesarWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
+import com.samehadar.program.utils.Trent;
+import com.sun.corba.se.spi.activation.Server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,6 +20,7 @@ import java.util.Scanner;
 public class Program {
     static Channel channel;
     static InetSocketAddress address;
+    public static String nickname;
     public static String destinationIP;
     public static String sessionKey = null;
 
@@ -27,7 +30,7 @@ public class Program {
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Name: ");
-        String name = scanner.nextLine();
+        nickname = scanner.nextLine();
 
         System.out.print("Source Port: ");
         int sourcePort = Integer.parseInt(scanner.nextLine());
@@ -52,10 +55,12 @@ public class Program {
             if (message.equals("$server shutdown")) {
                 break;
             } else if (message.equals("$server protocol_1_3")) {
-                realizeProtocol();
+                realizeProtocol_1_3();
+            } else if (message.equals("$server protocol_2_6")) {
+                realizeProtocol_2_6();
             }
 
-            message = name + " >> " + message;
+            message = nickname + " >> " + message;
             String messageForSending = cesar.encrypt(sessionKey, message);
 
             channel.sendTo(address, messageForSending);
@@ -66,7 +71,45 @@ public class Program {
         System.out.println("Shut down.");
     }
 
-    public static void realizeProtocol() throws IOException {
+    public static void realizeProtocol_2_6() throws IOException {
+        System.out.println("Реализация протокола Neuman-Stubblebine(Алиса)");
+        //TODO:: change if Trent wood be standalone app
+        String trentIP = "127.0.0.1";
+        Integer trentPort = 9909;
+        Trent trent = Trent.getInstance();
+        trent.setTrentPort(trentPort);
+        trent.start();
+        System.out.println("Trent: I'm wake up");
+
+        Socket trentSocket = new Socket(trentIP, trentPort);
+        BufferedReader trentReader = new BufferedReader(new InputStreamReader(trentSocket.getInputStream()));
+        PrintWriter trentWriter = new PrintWriter(trentSocket.getOutputStream(), true);
+        System.out.println("Added connection with Trent");
+
+        BigInteger kA = new BigInteger(trentReader.readLine());
+        System.out.println("Получен общий with Trent секретный ключ: " + kA);
+
+        channel.sendTo(address, "protocol_2_6");
+
+        Integer bobPort = 9910;
+        ServerSocket bobServerSocket = new ServerSocket(bobPort);
+        Socket bobSocket = bobServerSocket.accept();
+        BufferedReader bobReader = new BufferedReader(new InputStreamReader(bobSocket.getInputStream()));
+        PrintWriter bobWriter = new PrintWriter(bobSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение с Бобом");
+
+
+        //closing streams
+        trentSocket.close();
+        trentReader.close();
+        trentWriter.close();
+        bobServerSocket.close();
+        bobSocket.close();
+        bobReader.close();
+        bobWriter.close();
+    }
+
+    public static void realizeProtocol_1_3() throws IOException {
         System.out.println("Реализация протокола Взаимоблокировка(Алиса)");
         ServerSocket serverSocket = new ServerSocket(9909);
 

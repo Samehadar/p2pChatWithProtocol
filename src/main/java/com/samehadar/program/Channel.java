@@ -52,7 +52,9 @@ public class Channel implements Runnable {
                 message = cesar.decrypt(sessionKey, message);
 
                 if (message.equals("protocol_1_3")) {
-                    realizeProtocol();
+                    realizeProtocol_1_3();
+                } else if (message.equals("protocol_2_6")) {
+                    realizeProtocol_2_6();
                 }
                 System.out.println(message);
             } catch (IOException e) {
@@ -70,7 +72,33 @@ public class Channel implements Runnable {
         socket.send(packet);
     }
 
-    private void realizeProtocol() throws IOException {
+    //TODO::remove more sout after production
+    private void realizeProtocol_2_6() throws IOException {
+        System.out.println("Реализация протокола Neuman-Stubblebine(Боб)");
+        Socket trentSocket = new Socket(Program.destinationIP, 9909);
+        BufferedReader trentReader = new BufferedReader(new InputStreamReader(trentSocket.getInputStream()));
+        PrintWriter trentWriter = new PrintWriter(trentSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение with Trent.");
+
+        BigInteger kB = new BigInteger(trentReader.readLine());
+        System.out.println("Получен общий with Trent секретный ключ: " + kB);
+
+        Socket aliceSocket = new Socket(Program.destinationIP, 9910);
+        BufferedReader aliceReader = new BufferedReader(new InputStreamReader(aliceSocket.getInputStream()));
+        PrintWriter aliceWriter = new PrintWriter(aliceSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение с Алисой.");
+
+
+        //closing streams
+        trentSocket.close();
+        trentReader.close();
+        trentWriter.close();
+        aliceSocket.close();
+        aliceReader.close();
+        aliceWriter.close();
+    }
+
+    private void realizeProtocol_1_3() throws IOException {
         System.out.println("Реализация протокола Взаимоблокировка(Боб)");
         Socket socket = new Socket(Program.destinationIP, 9909);
         BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
