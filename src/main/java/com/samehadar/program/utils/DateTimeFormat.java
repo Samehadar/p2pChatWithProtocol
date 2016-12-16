@@ -10,13 +10,22 @@ import java.time.temporal.TemporalAccessor;
 public abstract class DateTimeFormat {
 
     private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+    private static DateTimeFormatter timestamp = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     public static String getNowString() {
         return LocalDateTime.now().format(dtf);
     }
 
-    public static TemporalAccessor parseString(String date) {
+    public static String getNowTimeStamp() {
+        return LocalDateTime.now().format(timestamp);
+    }
+
+    public static TemporalAccessor parseDate(String date) {
         return dtf.parse(date);
+    }
+
+    public static TemporalAccessor parseTimestamp(String datetime) {
+        return timestamp.parse(datetime);
     }
 
 }

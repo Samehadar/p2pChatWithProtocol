@@ -3,7 +3,7 @@ package com.samehadar.program.cipher;
 /**
  * TODO:: add comments
  */
-public class CesarWithoutMod implements Cypher<String, String> {
+public class CesarWithoutMod implements Cipher<String, String> {
 
     public CesarWithoutMod() {}
 

@@ -3,7 +3,6 @@ package com.samehadar.program;
 import com.samehadar.program.cipher.CesarWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
 import com.samehadar.program.utils.Trent;
-import com.sun.corba.se.spi.activation.Server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -98,9 +98,16 @@ public class Program {
         PrintWriter bobWriter = new PrintWriter(bobSocket.getOutputStream(), true);
         System.out.println("Установлено тайное соединение с Бобом");
 
-        BigInteger rA = BigInteger.probablePrime(25, trent.getSecureRandom());
+        BigInteger rA = BigInteger.probablePrime(25, Trent.getSecureRandom());
         bobWriter.println(Trent.createMessage(nickname, rA.toString()));
         System.out.println("Отправили Бобу никнейм и rA: " + Trent.createMessage(nickname, rA.toString()));
+
+        List<String> receiveMess1TrentParsed = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent: " + receiveMess1TrentParsed);
+        List<String> receiveMess2TrentParsed = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent: " + receiveMess2TrentParsed);
+        List<String> receiveMess3TrentParsed = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent: " + receiveMess3TrentParsed);
 
         //closing streams
         trentSocket.close();

@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class ELGamalSchema implements KeyGen<Map>, Cypher<Map, Map> {
+public class ELGamalSchema implements KeyGen<Map>, Cipher<Map, Map> {
 
     private BigInteger p;
     private BigInteger g;

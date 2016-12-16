@@ -1,7 +1,9 @@
 package com.samehadar.program;
 
 import com.samehadar.program.cipher.CesarWithoutMod;
+import com.samehadar.program.cipher.Cipher;
 import com.samehadar.program.cipher.ELGamalSchema;
+import com.samehadar.program.utils.DateTimeFormat;
 import com.samehadar.program.utils.Trent;
 
 import java.io.BufferedReader;
@@ -10,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +94,21 @@ public class Channel implements Runnable {
         System.out.println("Установлено тайное соединение с Алисой.");
 
         //receive Alice
-        List<String> receive = Trent.parseMessage(aliceReader.readLine());
-        System.out.println("Получили сообщение от Алисы: " + receive);
+        String receiveNotParsed = aliceReader.readLine();
+        System.out.println("Получили сообщение от Алисы: " + receiveNotParsed);
+
+        BigInteger rB = BigInteger.probablePrime(25, Trent.getSecureRandom());
+        Cipher<String, String> cipher = new CesarWithoutMod();
+        String cipherNow = cipher.encrypt(DateTimeFormat.getNowTimeStamp(), kB.toString());
+        List<String> cipherReceive = new ArrayList<>();
+        for (String part : Trent.parseMessage(receiveNotParsed)) {
+            cipherReceive.add(cipher.encrypt(part, kB.toString()));
+        }
+        String toTrent = Trent.createMessage(
+                Program.nickname, rB.toString(), cipherReceive.get(0), cipherReceive.get(1), cipherNow
+        );
+        trentWriter.println(toTrent);
+        System.out.println("Отправили to Trent сообщение(nickname,rB,E(aliceMessage, DateTimeNow)): " + toTrent);
 
         //closing streams
         trentSocket.close();

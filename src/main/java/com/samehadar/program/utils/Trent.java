@@ -1,5 +1,8 @@
 package com.samehadar.program.utils;
 
+import com.samehadar.program.cipher.CesarWithoutMod;
+import com.samehadar.program.cipher.Cipher;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,9 +23,13 @@ public class Trent implements Runnable {
     private static Trent trent;
     private Integer trentPort;
 
-    private Random secureRandom;
-    private BigInteger aliceK;
-    private BigInteger bobK;
+    private static Random secureRandom;
+    static {
+        secureRandom = new SecureRandom();
+    }
+    private BigInteger kA;
+    private BigInteger kB;
+    private BigInteger sessionKey;
 
     public static Trent getInstance() {
         if (trent == null) {
@@ -32,9 +39,8 @@ public class Trent implements Runnable {
     }
 
     private Trent() {
-        this.secureRandom = new SecureRandom();
-        this.aliceK = new BigInteger(30, this.secureRandom);
-        this.bobK = new BigInteger(30, this.secureRandom);
+        this.kA = new BigInteger(30, secureRandom);
+        this.kB = new BigInteger(30, secureRandom);
     }
 
     public void start() {
@@ -52,16 +58,43 @@ public class Trent implements Runnable {
             PrintWriter aliceWriter = new PrintWriter(aliceSocket.getOutputStream(), true);
             System.out.println("Trent: accepted Alice");
 
-            aliceWriter.println(this.aliceK);
-            System.out.println("Trent: send aliceK: " + this.aliceK);
+            aliceWriter.println(this.kA);
+            System.out.println("Trent: send kA: " + this.kA);
 
             Socket bobSocket = serverSocket.accept();
             BufferedReader bobReader = new BufferedReader(new InputStreamReader(bobSocket.getInputStream()));
             PrintWriter bobWriter = new PrintWriter(bobSocket.getOutputStream(), true);
             System.out.println("Trent: accepted Bob");
 
-            bobWriter.println(this.bobK);
-            System.out.println("Trent: send bobK: " + this.bobK);
+            bobWriter.println(this.kB);
+            System.out.println("Trent: send kB: " + this.kB);
+
+            String receiveBob = bobReader.readLine();
+            System.out.println("Trent: receive message from Bob: " + receiveBob);
+            this.sessionKey = new BigInteger(30, secureRandom);
+            System.out.println("Trent: generate sessionKey: " + sessionKey);
+            List<String> receiveBobParsed = parseMessage(receiveBob);
+            List<String> mess1 = new ArrayList<String>(){{
+                add(receiveBobParsed.get(0));//Bob nickname
+                add(receiveBobParsed.get(3));//rA
+                add(sessionKey.toString());  //sessionKey
+                add(receiveBobParsed.get(4));//timestamp
+            }};
+            Cipher<String , String> cesar = new CesarWithoutMod();
+            List<String> mess1Cipher = CipherUtils.cipherForEach(cesar, mess1, kA.toString());
+            aliceWriter.println(Trent.createMessage(mess1Cipher));
+            System.out.println("Trent: send to Alice mess1: " + mess1Cipher);
+            List<String> mess2 = new ArrayList<String>(){{
+                add(receiveBobParsed.get(2));//Alice nickname
+                add(sessionKey.toString());  //sessionKey
+                add(receiveBobParsed.get(4));//timestamp
+            }};
+            List<String> mess2Cipher = CipherUtils.cipherForEach(cesar, mess2, kB.toString());
+            aliceWriter.println(Trent.createMessage(mess2Cipher));
+            System.out.println("Trent: send to Alice mess2: " + mess2Cipher);
+            aliceWriter.println(receiveBobParsed.get(1)); //rB
+            System.out.println("Trent: send to Alice mess3: " + receiveBobParsed.get(1));
+
 
             //closing streams
             serverSocket.close();
@@ -80,6 +113,10 @@ public class Trent implements Runnable {
         this.trentPort = port;
     }
 
+    public static String createMessage(List<String> strings, String ... args) {
+        return createMessage(strings) + createMessage(args);
+    }
+
     public static String createMessage(String ... args) {
         return createMessage(Arrays.asList(args));
     }
@@ -96,8 +133,8 @@ public class Trent implements Runnable {
         return Arrays.asList(message.split("\\|"));
     }
 
-    public Random getSecureRandom() {
-        return this.secureRandom;
+    public static Random getSecureRandom() {
+        return secureRandom;
     }
 
     @Override
