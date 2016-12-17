@@ -26,7 +26,7 @@ public class Program {
     public static String destinationIP;
     public static String sessionKey = null;
 
-    public static VigenereWithoutMod cesar;
+    public static VigenereWithoutMod vigenere;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
@@ -47,7 +47,7 @@ public class Program {
         channel.bind(sourcePort);
         channel.start();
 
-        cesar = new VigenereWithoutMod();
+        vigenere = new VigenereWithoutMod();
         System.out.println("Started.");
 
         address = new InetSocketAddress(destinationIP, destinationPort);
@@ -63,7 +63,7 @@ public class Program {
             }
 
             message = nickname + " >> " + message;
-            String messageForSending = cesar.encrypt(message, sessionKey);
+            String messageForSending = vigenere.encrypt(message, sessionKey);
 
             channel.sendTo(address, messageForSending);
         }
@@ -111,7 +111,7 @@ public class Program {
         List<String> receiveMess3TrentParsed = Trent.parseMessage(trentReader.readLine());
         System.out.println("Получили from Trent: " + receiveMess3TrentParsed);
 
-        List<String> receiveMess1 = CipherUtils.decryptionForEach(cesar, receiveMess1TrentParsed, kA.toString());
+        List<String> receiveMess1 = CipherUtils.decryptionForEach(vigenere, receiveMess1TrentParsed, kA.toString());
         System.out.println(receiveMess1); //Bob nickname, rA, sessionKey, timestamp
         if (!rA.toString().equals(receiveMess1.get(1))) {
             System.out.println("Получили from Trent значение не совпадаеющее с отправленным: src(" + rA.toString() + "):" + receiveMess1.get(1));
@@ -125,8 +125,8 @@ public class Program {
         sessionKey = receiveMess1.get(2);
         bobWriter.println(Trent.createMessage(receiveMess2TrentParsed));
         System.out.println("Переслали Бобу сообщение from Trent: " + Trent.createMessage(receiveMess2TrentParsed));
-        bobWriter.println(Trent.createMessage(CipherUtils.encryptionForEach(cesar, receiveMess3TrentParsed, sessionKey)));
-        System.out.println("Отправили Бобу сообщение: " + Trent.createMessage(CipherUtils.encryptionForEach(cesar, receiveMess3TrentParsed, sessionKey)));
+        bobWriter.println(Trent.createMessage(CipherUtils.encryptionForEach(vigenere, receiveMess3TrentParsed, sessionKey)));
+        System.out.println("Отправили Бобу сообщение: " + Trent.createMessage(CipherUtils.encryptionForEach(vigenere, receiveMess3TrentParsed, sessionKey)));
 
         //closing streams
         trentSocket.close();

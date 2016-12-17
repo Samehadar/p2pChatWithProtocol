@@ -26,9 +26,9 @@ public class Channel implements Runnable {
     private boolean running;
 
     public static String sessionKey = null;
-    public static VigenereWithoutMod cesar;
+    public static VigenereWithoutMod vigenere;
     static {
-        cesar = new VigenereWithoutMod();
+        vigenere = new VigenereWithoutMod();
     }
 
     public void bind(int port) throws SocketException {
@@ -55,7 +55,7 @@ public class Channel implements Runnable {
                 socket.receive(packet);
 
                 String message = new String(buffer, 0, packet.getLength());
-                message = cesar.decrypt(message, sessionKey);
+                message = vigenere.decrypt(message, sessionKey);
 
                 if (message.equals("protocol_1_3")) {
                     realizeProtocol_1_3();
@@ -117,9 +117,9 @@ public class Channel implements Runnable {
         List<String> receiveAliceEnd2 = Trent.parseMessage(aliceReader.readLine());
         System.out.println("Получили сообщение от Алисы: " + receiveAliceEnd2);
         //rB
-        List<String> receiveAliceEndEncrypted1 = CipherUtils.decryptionForEach(cesar, receiveAliceEnd1, kB.toString());
+        List<String> receiveAliceEndEncrypted1 = CipherUtils.decryptionForEach(vigenere, receiveAliceEnd1, kB.toString());
         System.out.println("Расшифрованное сообщение1 Алисы " + receiveAliceEndEncrypted1);
-        List<String> receiveAliceEndEncrypted2 = CipherUtils.decryptionForEach(cesar, receiveAliceEnd2, receiveAliceEndEncrypted1.get(1));
+        List<String> receiveAliceEndEncrypted2 = CipherUtils.decryptionForEach(vigenere, receiveAliceEnd2, receiveAliceEndEncrypted1.get(1));
         System.out.println("Расшифрованное сообщение2 Алисы " + receiveAliceEndEncrypted2);
         if (!rB.toString().equals(receiveAliceEndEncrypted2.get(0))) {
             System.out.println("Получили from Trent значение не совпадаеющее с отправленным: src(" + rB.toString() + "):" + receiveAliceEndEncrypted1.get(1));
