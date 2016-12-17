@@ -93,7 +93,7 @@ public class Trent implements Runnable {
             mess2.add(vigenere.decrypt(receiveBobParsed.get(4), kB.toString()));    //timestamp
             System.out.println("Trent: pack mess2 for Alice: " + Trent.createMessage(mess2));
             List<String> mess2Cipher = CipherUtils.encryptionForEach(vigenere, mess2, kB.toString());
-            aliceWriter.println(Trent.createMessage(mess1Cipher));
+            aliceWriter.println(Trent.createMessage(mess2Cipher));
             System.out.println("Trent: send to Alice mess2: " + mess2Cipher);
             //fill message3 for Alice
             aliceWriter.println(receiveBobParsed.get(1));                           //rB

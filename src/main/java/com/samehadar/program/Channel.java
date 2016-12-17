@@ -3,6 +3,7 @@ package com.samehadar.program;
 import com.samehadar.program.cipher.VigenereWithoutMod;
 import com.samehadar.program.cipher.Cipher;
 import com.samehadar.program.cipher.ELGamalSchema;
+import com.samehadar.program.utils.CipherUtils;
 import com.samehadar.program.utils.DateTimeFormat;
 import com.samehadar.program.utils.Trent;
 
@@ -96,7 +97,6 @@ public class Channel implements Runnable {
         //receive Alice
         String receiveAlice = aliceReader.readLine();
         System.out.println("Получили сообщение от Алисы: " + receiveAlice);
-
         BigInteger rB = BigInteger.probablePrime(25, Trent.getSecureRandom());
         Cipher<String, String> cipher = new VigenereWithoutMod();
         String cipherNow = cipher.encrypt(DateTimeFormat.getNowTimeStamp(), kB.toString());
@@ -109,6 +109,27 @@ public class Channel implements Runnable {
         );
         trentWriter.println(toTrent);
         System.out.println("Отправили to Trent сообщение(nickname,rB,E(aliceNickname, aliceMessage, DateTimeNow)): " + toTrent);
+
+        //receive AliceEnd
+        List<String> receiveAliceEnd1 = Trent.parseMessage(aliceReader.readLine());
+        System.out.println("Получили сообщение от Алисы: " + receiveAliceEnd1);
+        //AliceNickname, sessionKey, timestamp
+        List<String> receiveAliceEnd2 = Trent.parseMessage(aliceReader.readLine());
+        System.out.println("Получили сообщение от Алисы: " + receiveAliceEnd2);
+        //rB
+        List<String> receiveAliceEndEncrypted1 = CipherUtils.decryptionForEach(cesar, receiveAliceEnd1, kB.toString());
+        System.out.println("Расшифрованное сообщение1 Алисы " + receiveAliceEndEncrypted1);
+        List<String> receiveAliceEndEncrypted2 = CipherUtils.decryptionForEach(cesar, receiveAliceEnd2, receiveAliceEndEncrypted1.get(1));
+        System.out.println("Расшифрованное сообщение2 Алисы " + receiveAliceEndEncrypted2);
+        if (!rB.toString().equals(receiveAliceEndEncrypted2.get(0))) {
+            System.out.println("Получили from Trent значение не совпадаеющее с отправленным: src(" + rB.toString() + "):" + receiveAliceEndEncrypted1.get(1));
+            return;
+        }
+        if (DateTimeFormat.getDeltaWithNowMILLI(receiveAliceEndEncrypted1.get(2)) > 5000) {
+            System.out.println("Время ожидания истекло, сообщение не валидно.");
+            return;
+        }
+        sessionKey = receiveAliceEndEncrypted1.get(1);
 
         //closing streams
         trentSocket.close();

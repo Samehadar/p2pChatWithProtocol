@@ -2,6 +2,8 @@ package com.samehadar.program;
 
 import com.samehadar.program.cipher.VigenereWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
+import com.samehadar.program.utils.CipherUtils;
+import com.samehadar.program.utils.DateTimeFormat;
 import com.samehadar.program.utils.Trent;
 
 import java.io.BufferedReader;
@@ -109,9 +111,22 @@ public class Program {
         List<String> receiveMess3TrentParsed = Trent.parseMessage(trentReader.readLine());
         System.out.println("Получили from Trent: " + receiveMess3TrentParsed);
 
-//        List<String> receiveMess1 = CipherUtils.decryptionForEach(cesar, receiveMess1TrentParsed, kA.toString());
-//        System.out.println(receiveMess1);
-        //Bob nickname, rA, sessionKey, timestamp
+        List<String> receiveMess1 = CipherUtils.decryptionForEach(cesar, receiveMess1TrentParsed, kA.toString());
+        System.out.println(receiveMess1); //Bob nickname, rA, sessionKey, timestamp
+        if (!rA.toString().equals(receiveMess1.get(1))) {
+            System.out.println("Получили from Trent значение не совпадаеющее с отправленным: src(" + rA.toString() + "):" + receiveMess1.get(1));
+            //TODO:: send any signal for Bob to stop waiting Alice message
+            return;
+        }
+        if (DateTimeFormat.getDeltaWithNowMILLI(receiveMess1.get(3)) > 5000) {
+            System.out.println("Время ожидания истекло, сообщение не валидно.");
+            return;
+        }
+        sessionKey = receiveMess1.get(2);
+        bobWriter.println(Trent.createMessage(receiveMess2TrentParsed));
+        System.out.println("Переслали Бобу сообщение from Trent: " + Trent.createMessage(receiveMess2TrentParsed));
+        bobWriter.println(Trent.createMessage(CipherUtils.encryptionForEach(cesar, receiveMess3TrentParsed, sessionKey)));
+        System.out.println("Отправили Бобу сообщение: " + Trent.createMessage(CipherUtils.encryptionForEach(cesar, receiveMess3TrentParsed, sessionKey)));
 
         //closing streams
         trentSocket.close();

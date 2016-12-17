@@ -2,7 +2,10 @@ package com.samehadar.program.utils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalField;
+import java.util.Date;
 
 /**
  * Support class for works with date and time
@@ -28,9 +31,9 @@ public abstract class DateTimeFormat {
         return timestamp.parse(datetime);
     }
 
-    public static Integer getDelta(TemporalAccessor first, TemporalAccessor second) {
-        //TODO::
-        return null;
+    public static Long getDeltaWithNowMILLI(String timestamp) {
+        TemporalAccessor ts = parseTimestamp(timestamp);
+        return ts.getLong(ChronoField.MILLI_OF_SECOND) - LocalDateTime.now().getLong(ChronoField.MILLI_OF_SECOND);
     }
 
 }
