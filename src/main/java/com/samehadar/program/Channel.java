@@ -1,6 +1,6 @@
 package com.samehadar.program;
 
-import com.samehadar.program.cipher.CesarWithoutMod;
+import com.samehadar.program.cipher.VigenereWithoutMod;
 import com.samehadar.program.cipher.Cipher;
 import com.samehadar.program.cipher.ELGamalSchema;
 import com.samehadar.program.utils.DateTimeFormat;
@@ -25,9 +25,9 @@ public class Channel implements Runnable {
     private boolean running;
 
     public static String sessionKey = null;
-    public static CesarWithoutMod cesar;
+    public static VigenereWithoutMod cesar;
     static {
-        cesar = new CesarWithoutMod();
+        cesar = new VigenereWithoutMod();
     }
 
     public void bind(int port) throws SocketException {
@@ -98,7 +98,7 @@ public class Channel implements Runnable {
         System.out.println("Получили сообщение от Алисы: " + receiveNotParsed);
 
         BigInteger rB = BigInteger.probablePrime(25, Trent.getSecureRandom());
-        Cipher<String, String> cipher = new CesarWithoutMod();
+        Cipher<String, String> cipher = new VigenereWithoutMod();
         String cipherNow = cipher.encrypt(DateTimeFormat.getNowTimeStamp(), kB.toString());
         List<String> cipherReceive = new ArrayList<>();
         for (String part : Trent.parseMessage(receiveNotParsed)) {

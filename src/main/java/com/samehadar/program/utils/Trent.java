@@ -1,6 +1,6 @@
 package com.samehadar.program.utils;
 
-import com.samehadar.program.cipher.CesarWithoutMod;
+import com.samehadar.program.cipher.VigenereWithoutMod;
 import com.samehadar.program.cipher.Cipher;
 
 import java.io.BufferedReader;
@@ -51,6 +51,7 @@ public class Trent implements Runnable {
     @Override
     public void run() {
         try {
+            //TODO::need to check timestamp validity (etc timeout)
             ServerSocket serverSocket = new ServerSocket(trentPort);
 
             Socket aliceSocket = serverSocket.accept();
@@ -76,12 +77,13 @@ public class Trent implements Runnable {
             List<String> receiveBobParsed = parseMessage(receiveBob);
             List<String> mess1 = new ArrayList<String>(){{
                 add(receiveBobParsed.get(0));//Bob nickname
+                //TODO:: отправляю защифрованное, а нужно нет(у трента есть не зашифрованное!)
                 add(receiveBobParsed.get(3));//rA
                 add(sessionKey.toString());  //sessionKey
                 add(receiveBobParsed.get(4));//timestamp
             }};
-            Cipher<String , String> cesar = new CesarWithoutMod();
-            List<String> mess1Cipher = CipherUtils.cipherForEach(cesar, mess1, kA.toString());
+            Cipher<String , String> cesar = new VigenereWithoutMod();
+            List<String> mess1Cipher = CipherUtils.encryptionForEach(cesar, mess1, kA.toString());
             aliceWriter.println(Trent.createMessage(mess1Cipher));
             System.out.println("Trent: send to Alice mess1: " + mess1Cipher);
             List<String> mess2 = new ArrayList<String>(){{
@@ -89,7 +91,7 @@ public class Trent implements Runnable {
                 add(sessionKey.toString());  //sessionKey
                 add(receiveBobParsed.get(4));//timestamp
             }};
-            List<String> mess2Cipher = CipherUtils.cipherForEach(cesar, mess2, kB.toString());
+            List<String> mess2Cipher = CipherUtils.encryptionForEach(cesar, mess2, kB.toString());
             aliceWriter.println(Trent.createMessage(mess2Cipher));
             System.out.println("Trent: send to Alice mess2: " + mess2Cipher);
             aliceWriter.println(receiveBobParsed.get(1)); //rB

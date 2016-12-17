@@ -3,20 +3,17 @@ package com.samehadar.program.cipher;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.*;
 
 /**
  * Created by User on 16.12.2016.
  */
-public class CesarWithoutModTest {
-    CesarWithoutMod cesar;
+public class VigenereWithoutModTest {
+    VigenereWithoutMod cesar;
 
     @Before
     public void setUp() throws Exception {
-        cesar = new CesarWithoutMod();
+        cesar = new VigenereWithoutMod();
     }
 
     @Test

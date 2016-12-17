@@ -6,14 +6,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by User on 16.12.2016.
+ * Utils for ciphers
  */
 public class CipherUtils {
 
-    public static List<String> cipherForEach(Cipher<String, String> cipher, List<String> strings, String key) {
+    public static List<String> encryptionForEach(Cipher<String, String> cipher, List<String> strings, String key) {
         List<String> result = new ArrayList<>();
         for (String part : strings) {
             result.add(cipher.encrypt(part, key));
+        }
+        return result;
+    }
+
+    public static List<String> decryptionForEach(Cipher<String, String> cipher, List<String> strings, String key) {
+        List<String> result = new ArrayList<>();
+        for (String part : strings) {
+            result.add(cipher.decrypt(part, key));
         }
         return result;
     }

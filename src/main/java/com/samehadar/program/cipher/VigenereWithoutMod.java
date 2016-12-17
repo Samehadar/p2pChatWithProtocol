@@ -3,10 +3,11 @@ package com.samehadar.program.cipher;
 /**
  * TODO:: add comments
  */
-public class CesarWithoutMod implements Cipher<String, String> {
+public class VigenereWithoutMod implements Cipher<String, String> {
 
-    public CesarWithoutMod() {}
+    public VigenereWithoutMod() {}
 
+    //TODO:: это Виженер а не цезарь
     @Override
     public String encrypt(String key, String message) {
         if (key == null) {

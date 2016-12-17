@@ -1,6 +1,6 @@
 package com.samehadar.program;
 
-import com.samehadar.program.cipher.CesarWithoutMod;
+import com.samehadar.program.cipher.VigenereWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
 import com.samehadar.program.utils.Trent;
 
@@ -24,7 +24,7 @@ public class Program {
     public static String destinationIP;
     public static String sessionKey = null;
 
-    public static CesarWithoutMod cesar;
+    public static VigenereWithoutMod cesar;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
@@ -45,7 +45,7 @@ public class Program {
         channel.bind(sourcePort);
         channel.start();
 
-        cesar = new CesarWithoutMod();
+        cesar = new VigenereWithoutMod();
         System.out.println("Started.");
 
         address = new InetSocketAddress(destinationIP, destinationPort);
@@ -108,6 +108,10 @@ public class Program {
         System.out.println("Получили from Trent: " + receiveMess2TrentParsed);
         List<String> receiveMess3TrentParsed = Trent.parseMessage(trentReader.readLine());
         System.out.println("Получили from Trent: " + receiveMess3TrentParsed);
+
+//        List<String> receiveMess1 = CipherUtils.decryptionForEach(cesar, receiveMess1TrentParsed, kA.toString());
+//        System.out.println(receiveMess1);
+        //Bob nickname, rA, sessionKey, timestamp
 
         //closing streams
         trentSocket.close();
