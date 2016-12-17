@@ -13,7 +13,8 @@ CryptoChat
 ##Server command(may be changed): 
 Start with '$server':
   - $server schutdown - suthdown your chat client
-  - $server protocol_1_3 - start protocol 1.3("deadlock"). After writing this command all your and friends massage encrypt by ELGamalSchema
+  - $server protocol_1_3 - start protocol 1.3("deadlock").
+  - #server protocol_2_6 - start protocol 2.6("Neuman-Stubblebine").
   
 ##Protocols:
 ###  - Protocol 1.3 ("Deadlock")[only russian now]:
