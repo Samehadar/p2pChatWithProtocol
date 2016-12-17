@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
 /**
- * Created by User on 16.12.2016.
+ * Support class for works with date and time
  */
 public abstract class DateTimeFormat {
 
@@ -26,6 +26,11 @@ public abstract class DateTimeFormat {
 
     public static TemporalAccessor parseTimestamp(String datetime) {
         return timestamp.parse(datetime);
+    }
+
+    public static Integer getDelta(TemporalAccessor first, TemporalAccessor second) {
+        //TODO::
+        return null;
     }
 
 }

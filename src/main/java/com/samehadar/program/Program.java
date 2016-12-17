@@ -61,7 +61,7 @@ public class Program {
             }
 
             message = nickname + " >> " + message;
-            String messageForSending = cesar.encrypt(sessionKey, message);
+            String messageForSending = cesar.encrypt(message, sessionKey);
 
             channel.sendTo(address, messageForSending);
         }

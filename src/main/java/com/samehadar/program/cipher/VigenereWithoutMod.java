@@ -7,14 +7,13 @@ public class VigenereWithoutMod implements Cipher<String, String> {
 
     public VigenereWithoutMod() {}
 
-    //TODO:: это Виженер а не цезарь
     @Override
-    public String encrypt(String key, String message) {
+    public String encrypt(String openText, String key) {
         if (key == null) {
-            return message;
+            return openText;
         } else {
             char[] keys = key.toCharArray();
-            char[] messageByte = message.toCharArray();
+            char[] messageByte = openText.toCharArray();
             StringBuilder result = new StringBuilder();
             for (int i = 0; i < messageByte.length; i++) {
                 result.append((char)(messageByte[i] + keys[i % key.length()]));
@@ -24,12 +23,12 @@ public class VigenereWithoutMod implements Cipher<String, String> {
     }
 
     @Override
-    public String decrypt(String key, String encryptedMessage) {
+    public String decrypt(String cipherText, String key) {
         if (key == null) {
-            return encryptedMessage;
+            return cipherText;
         } else {
             char[] keys = key.toCharArray();
-            char[] messageByte = encryptedMessage.toCharArray();
+            char[] messageByte = cipherText.toCharArray();
             StringBuilder result = new StringBuilder();
             for (int i = 0; i < messageByte.length; i++) {
                 result.append((char)(messageByte[i] - keys[i % key.length()]));

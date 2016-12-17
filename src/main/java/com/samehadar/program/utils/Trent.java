@@ -75,26 +75,28 @@ public class Trent implements Runnable {
             this.sessionKey = new BigInteger(30, secureRandom);
             System.out.println("Trent: generate sessionKey: " + sessionKey);
             List<String> receiveBobParsed = parseMessage(receiveBob);
-            List<String> mess1 = new ArrayList<String>(){{
-                add(receiveBobParsed.get(0));//Bob nickname
-                //TODO:: отправляю защифрованное, а нужно нет(у трента есть не зашифрованное!)
-                add(receiveBobParsed.get(3));//rA
-                add(sessionKey.toString());  //sessionKey
-                add(receiveBobParsed.get(4));//timestamp
-            }};
-            Cipher<String , String> cesar = new VigenereWithoutMod();
-            List<String> mess1Cipher = CipherUtils.encryptionForEach(cesar, mess1, kA.toString());
+            //fill message1 for Alice
+            List<String> mess1 = new ArrayList<>();
+            Cipher<String, String> vigenere = new VigenereWithoutMod();
+            mess1.add(receiveBobParsed.get(0));                                     //Bob nickname
+            mess1.add(vigenere.decrypt(receiveBobParsed.get(3), kB.toString()));    //decrypted rA
+            mess1.add(sessionKey.toString());                                       //sessionKey
+            mess1.add(vigenere.decrypt(receiveBobParsed.get(4), kB.toString()));    //timestamp
+            System.out.println("Trent: pack mess1 for Alice: " + Trent.createMessage(mess1));
+            List<String> mess1Cipher = CipherUtils.encryptionForEach(vigenere, mess1, kA.toString());
             aliceWriter.println(Trent.createMessage(mess1Cipher));
             System.out.println("Trent: send to Alice mess1: " + mess1Cipher);
-            List<String> mess2 = new ArrayList<String>(){{
-                add(receiveBobParsed.get(2));//Alice nickname
-                add(sessionKey.toString());  //sessionKey
-                add(receiveBobParsed.get(4));//timestamp
-            }};
-            List<String> mess2Cipher = CipherUtils.encryptionForEach(cesar, mess2, kB.toString());
-            aliceWriter.println(Trent.createMessage(mess2Cipher));
+            //fill message2 for Alice
+            List<String> mess2 = new ArrayList<>();
+            mess2.add(vigenere.decrypt(receiveBobParsed.get(2), kB.toString()));    //Alice nickname
+            mess2.add(sessionKey.toString());                                       //sessionKey
+            mess2.add(vigenere.decrypt(receiveBobParsed.get(4), kB.toString()));    //timestamp
+            System.out.println("Trent: pack mess2 for Alice: " + Trent.createMessage(mess2));
+            List<String> mess2Cipher = CipherUtils.encryptionForEach(vigenere, mess2, kB.toString());
+            aliceWriter.println(Trent.createMessage(mess1Cipher));
             System.out.println("Trent: send to Alice mess2: " + mess2Cipher);
-            aliceWriter.println(receiveBobParsed.get(1)); //rB
+            //fill message3 for Alice
+            aliceWriter.println(receiveBobParsed.get(1));                           //rB
             System.out.println("Trent: send to Alice mess3: " + receiveBobParsed.get(1));
 
 

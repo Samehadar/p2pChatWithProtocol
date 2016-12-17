@@ -54,7 +54,7 @@ public class Channel implements Runnable {
                 socket.receive(packet);
 
                 String message = new String(buffer, 0, packet.getLength());
-                message = cesar.decrypt(sessionKey, message);
+                message = cesar.decrypt(message, sessionKey);
 
                 if (message.equals("protocol_1_3")) {
                     realizeProtocol_1_3();
@@ -94,21 +94,21 @@ public class Channel implements Runnable {
         System.out.println("Установлено тайное соединение с Алисой.");
 
         //receive Alice
-        String receiveNotParsed = aliceReader.readLine();
-        System.out.println("Получили сообщение от Алисы: " + receiveNotParsed);
+        String receiveAlice = aliceReader.readLine();
+        System.out.println("Получили сообщение от Алисы: " + receiveAlice);
 
         BigInteger rB = BigInteger.probablePrime(25, Trent.getSecureRandom());
         Cipher<String, String> cipher = new VigenereWithoutMod();
         String cipherNow = cipher.encrypt(DateTimeFormat.getNowTimeStamp(), kB.toString());
         List<String> cipherReceive = new ArrayList<>();
-        for (String part : Trent.parseMessage(receiveNotParsed)) {
+        for (String part : Trent.parseMessage(receiveAlice)) {
             cipherReceive.add(cipher.encrypt(part, kB.toString()));
         }
         String toTrent = Trent.createMessage(
                 Program.nickname, rB.toString(), cipherReceive.get(0), cipherReceive.get(1), cipherNow
         );
         trentWriter.println(toTrent);
-        System.out.println("Отправили to Trent сообщение(nickname,rB,E(aliceMessage, DateTimeNow)): " + toTrent);
+        System.out.println("Отправили to Trent сообщение(nickname,rB,E(aliceNickname, aliceMessage, DateTimeNow)): " + toTrent);
 
         //closing streams
         trentSocket.close();
