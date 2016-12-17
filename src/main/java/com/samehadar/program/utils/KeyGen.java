@@ -1,7 +1,7 @@
-package com.samehadar.program.cipher;
+package com.samehadar.program.utils;
 
 /**
- * Created by User on 14.12.2016.
+ * Interface of KeyGenerator
  */
 public interface KeyGen<TKey> {
 

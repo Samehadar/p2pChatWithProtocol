@@ -1,7 +1,10 @@
 package com.samehadar.program;
 
-import com.samehadar.program.cipher.CesarWithoutMod;
+import com.samehadar.program.cipher.VigenereWithoutMod;
 import com.samehadar.program.cipher.ELGamalSchema;
+import com.samehadar.program.utils.CipherUtils;
+import com.samehadar.program.utils.DateTimeFormat;
+import com.samehadar.program.utils.Trent;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,22 +15,24 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Program {
     static Channel channel;
     static InetSocketAddress address;
+    public static String nickname;
     public static String destinationIP;
     public static String sessionKey = null;
 
-    public static CesarWithoutMod cesar;
+    public static VigenereWithoutMod cesar;
 
     public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Name: ");
-        String name = scanner.nextLine();
+        nickname = scanner.nextLine();
 
         System.out.print("Source Port: ");
         int sourcePort = Integer.parseInt(scanner.nextLine());
@@ -42,7 +47,7 @@ public class Program {
         channel.bind(sourcePort);
         channel.start();
 
-        cesar = new CesarWithoutMod();
+        cesar = new VigenereWithoutMod();
         System.out.println("Started.");
 
         address = new InetSocketAddress(destinationIP, destinationPort);
@@ -52,11 +57,13 @@ public class Program {
             if (message.equals("$server shutdown")) {
                 break;
             } else if (message.equals("$server protocol_1_3")) {
-                realizeProtocol();
+                realizeProtocol_1_3();
+            } else if (message.equals("$server protocol_2_6")) {
+                realizeProtocol_2_6();
             }
 
-            message = name + " >> " + message;
-            String messageForSending = cesar.encrypt(sessionKey, message);
+            message = nickname + " >> " + message;
+            String messageForSending = cesar.encrypt(message, sessionKey);
 
             channel.sendTo(address, messageForSending);
         }
@@ -66,7 +73,72 @@ public class Program {
         System.out.println("Shut down.");
     }
 
-    public static void realizeProtocol() throws IOException {
+    public static void realizeProtocol_2_6() throws IOException {
+        System.out.println("Реализация протокола Neuman-Stubblebine(Алиса)");
+        //TODO:: change it(and all time stamp wood be receive from Trent) if Trent wood be standalone app
+        String trentIP = "127.0.0.1";
+        Integer trentPort = 9909;
+        Trent trent = Trent.getInstance();
+        trent.setTrentPort(trentPort);
+        trent.start();
+        System.out.println("Trent: I'm wake up");
+
+        Socket trentSocket = new Socket(trentIP, trentPort);
+        BufferedReader trentReader = new BufferedReader(new InputStreamReader(trentSocket.getInputStream()));
+        PrintWriter trentWriter = new PrintWriter(trentSocket.getOutputStream(), true);
+        System.out.println("Added connection with Trent");
+
+        BigInteger kA = new BigInteger(trentReader.readLine());
+        System.out.println("Получен общий with Trent секретный ключ: " + kA);
+
+        channel.sendTo(address, "protocol_2_6");
+
+        Integer bobPort = 9910;
+        ServerSocket bobServerSocket = new ServerSocket(bobPort);
+        Socket bobSocket = bobServerSocket.accept();
+        BufferedReader bobReader = new BufferedReader(new InputStreamReader(bobSocket.getInputStream()));
+        PrintWriter bobWriter = new PrintWriter(bobSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение с Бобом");
+
+        BigInteger rA = BigInteger.probablePrime(25, Trent.getSecureRandom());
+        bobWriter.println(Trent.createMessage(nickname, rA.toString()));
+        System.out.println("Отправили Бобу никнейм и rA: " + Trent.createMessage(nickname, rA.toString()));
+
+        List<String> receiveMess1TrentParsed = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent: " + receiveMess1TrentParsed);
+        List<String> receiveMess2TrentParsed = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent: " + receiveMess2TrentParsed);
+        List<String> receiveMess3TrentParsed = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent: " + receiveMess3TrentParsed);
+
+        List<String> receiveMess1 = CipherUtils.decryptionForEach(cesar, receiveMess1TrentParsed, kA.toString());
+        System.out.println(receiveMess1); //Bob nickname, rA, sessionKey, timestamp
+        if (!rA.toString().equals(receiveMess1.get(1))) {
+            System.out.println("Получили from Trent значение не совпадаеющее с отправленным: src(" + rA.toString() + "):" + receiveMess1.get(1));
+            //TODO:: send any signal for Bob to stop waiting Alice message
+            return;
+        }
+        if (DateTimeFormat.getDeltaWithNowMILLI(receiveMess1.get(3)) > 5000) {
+            System.out.println("Время ожидания истекло, сообщение не валидно.");
+            return;
+        }
+        sessionKey = receiveMess1.get(2);
+        bobWriter.println(Trent.createMessage(receiveMess2TrentParsed));
+        System.out.println("Переслали Бобу сообщение from Trent: " + Trent.createMessage(receiveMess2TrentParsed));
+        bobWriter.println(Trent.createMessage(CipherUtils.encryptionForEach(cesar, receiveMess3TrentParsed, sessionKey)));
+        System.out.println("Отправили Бобу сообщение: " + Trent.createMessage(CipherUtils.encryptionForEach(cesar, receiveMess3TrentParsed, sessionKey)));
+
+        //closing streams
+        trentSocket.close();
+        trentReader.close();
+        trentWriter.close();
+        bobServerSocket.close();
+        bobSocket.close();
+        bobReader.close();
+        bobWriter.close();
+    }
+
+    public static void realizeProtocol_1_3() throws IOException {
         System.out.println("Реализация протокола Взаимоблокировка(Алиса)");
         ServerSocket serverSocket = new ServerSocket(9909);
 
