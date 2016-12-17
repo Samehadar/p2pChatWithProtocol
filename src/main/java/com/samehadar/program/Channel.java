@@ -1,6 +1,11 @@
 package com.samehadar.program;
 
+import com.samehadar.program.cipher.VigenereWithoutMod;
+import com.samehadar.program.cipher.Cipher;
 import com.samehadar.program.cipher.ELGamalSchema;
+import com.samehadar.program.utils.CipherUtils;
+import com.samehadar.program.utils.DateTimeFormat;
+import com.samehadar.program.utils.Trent;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,7 +13,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,6 +24,12 @@ import java.util.Map;
 public class Channel implements Runnable {
     private DatagramSocket socket;
     private boolean running;
+
+    public static String sessionKey = null;
+    public static VigenereWithoutMod cesar;
+    static {
+        cesar = new VigenereWithoutMod();
+    }
 
     public void bind(int port) throws SocketException {
         socket = new DatagramSocket(port);
@@ -42,8 +55,12 @@ public class Channel implements Runnable {
                 socket.receive(packet);
 
                 String message = new String(buffer, 0, packet.getLength());
+                message = cesar.decrypt(message, sessionKey);
+
                 if (message.equals("protocol_1_3")) {
-                    realizeProtocol();
+                    realizeProtocol_1_3();
+                } else if (message.equals("protocol_2_6")) {
+                    realizeProtocol_2_6();
                 }
                 System.out.println(message);
             } catch (IOException e) {
@@ -61,7 +78,69 @@ public class Channel implements Runnable {
         socket.send(packet);
     }
 
-    private void realizeProtocol() throws IOException {
+    //TODO::remove more sout after production
+    private void realizeProtocol_2_6() throws IOException {
+        System.out.println("Реализация протокола Neuman-Stubblebine(Боб)");
+        Socket trentSocket = new Socket(Program.destinationIP, 9909);
+        BufferedReader trentReader = new BufferedReader(new InputStreamReader(trentSocket.getInputStream()));
+        PrintWriter trentWriter = new PrintWriter(trentSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение with Trent.");
+
+        BigInteger kB = new BigInteger(trentReader.readLine());
+        System.out.println("Получен общий with Trent секретный ключ: " + kB);
+
+        Socket aliceSocket = new Socket(Program.destinationIP, 9910);
+        BufferedReader aliceReader = new BufferedReader(new InputStreamReader(aliceSocket.getInputStream()));
+        PrintWriter aliceWriter = new PrintWriter(aliceSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение с Алисой.");
+
+        //receive Alice
+        String receiveAlice = aliceReader.readLine();
+        System.out.println("Получили сообщение от Алисы: " + receiveAlice);
+        BigInteger rB = BigInteger.probablePrime(25, Trent.getSecureRandom());
+        Cipher<String, String> cipher = new VigenereWithoutMod();
+        String cipherNow = cipher.encrypt(DateTimeFormat.getNowTimeStamp(), kB.toString());
+        List<String> cipherReceive = new ArrayList<>();
+        for (String part : Trent.parseMessage(receiveAlice)) {
+            cipherReceive.add(cipher.encrypt(part, kB.toString()));
+        }
+        String toTrent = Trent.createMessage(
+                Program.nickname, rB.toString(), cipherReceive.get(0), cipherReceive.get(1), cipherNow
+        );
+        trentWriter.println(toTrent);
+        System.out.println("Отправили to Trent сообщение(nickname,rB,E(aliceNickname, aliceMessage, DateTimeNow)): " + toTrent);
+
+        //receive AliceEnd
+        List<String> receiveAliceEnd1 = Trent.parseMessage(aliceReader.readLine());
+        System.out.println("Получили сообщение от Алисы: " + receiveAliceEnd1);
+        //AliceNickname, sessionKey, timestamp
+        List<String> receiveAliceEnd2 = Trent.parseMessage(aliceReader.readLine());
+        System.out.println("Получили сообщение от Алисы: " + receiveAliceEnd2);
+        //rB
+        List<String> receiveAliceEndEncrypted1 = CipherUtils.decryptionForEach(cesar, receiveAliceEnd1, kB.toString());
+        System.out.println("Расшифрованное сообщение1 Алисы " + receiveAliceEndEncrypted1);
+        List<String> receiveAliceEndEncrypted2 = CipherUtils.decryptionForEach(cesar, receiveAliceEnd2, receiveAliceEndEncrypted1.get(1));
+        System.out.println("Расшифрованное сообщение2 Алисы " + receiveAliceEndEncrypted2);
+        if (!rB.toString().equals(receiveAliceEndEncrypted2.get(0))) {
+            System.out.println("Получили from Trent значение не совпадаеющее с отправленным: src(" + rB.toString() + "):" + receiveAliceEndEncrypted1.get(1));
+            return;
+        }
+        if (DateTimeFormat.getDeltaWithNowMILLI(receiveAliceEndEncrypted1.get(2)) > 5000) {
+            System.out.println("Время ожидания истекло, сообщение не валидно.");
+            return;
+        }
+        sessionKey = receiveAliceEndEncrypted1.get(1);
+
+        //closing streams
+        trentSocket.close();
+        trentReader.close();
+        trentWriter.close();
+        aliceSocket.close();
+        aliceReader.close();
+        aliceWriter.close();
+    }
+
+    private void realizeProtocol_1_3() throws IOException {
         System.out.println("Реализация протокола Взаимоблокировка(Боб)");
         Socket socket = new Socket(Program.destinationIP, 9909);
         BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -80,9 +159,9 @@ public class Channel implements Runnable {
         System.out.println(key);
 
         //BigInteger rA = BigInteger.probablePrime(25, cipherBob.getSecureRandom());
-        BigInteger rA = new BigInteger("123125125");
+        BigInteger rB = new BigInteger("123125125");
         System.out.print("Сгенерировали свою часть сессионного ключа: ");
-        System.out.println("rA = " + rA);
+        System.out.println("rB = " + rB);
 
         String[] keyAlice = reader.readLine().split(",");
         BigInteger pAlice = new BigInteger(keyAlice[0]);
@@ -99,7 +178,7 @@ public class Channel implements Runnable {
         BigInteger partA = new BigInteger(reader.readLine());
         System.out.println("Получили от Алисы первую часть зашифрованного сообщения: " + partA);
 
-        Map<String, BigInteger> ab = cipherBob.encrypt(rA.toString(), openKeysAlice);
+        Map<String, BigInteger> ab = cipherBob.encrypt(rB.toString(), openKeysAlice);
         System.out.println("Зашифровали сообщение открытым ключом Алисы");
         System.out.println("result = " + ab);
 
@@ -117,6 +196,10 @@ public class Channel implements Runnable {
         abAlice.put("b", partB);
         String aliceMessage = cipherBob.decrypt(cipherBob.concatenateCipherText(abAlice), key);
         System.out.println("Расшифрованное сообщение Алисы: " + aliceMessage);
+
+        BigInteger rA = new BigInteger(aliceMessage);
+        sessionKey = rA.xor(rB).toString();
+        System.out.println("Ключ сессии: " + sessionKey);
 
         reader.close();
         writer.close();

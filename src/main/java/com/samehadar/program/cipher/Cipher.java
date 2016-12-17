@@ -3,7 +3,7 @@ package com.samehadar.program.cipher;
 /**
  * Created by User on 14.12.2016.
  */
-public interface Cypher<TKey, TResult> {
+public interface Cipher<TKey, TResult> {
 
     TResult encrypt(String openText, TKey key);
 
