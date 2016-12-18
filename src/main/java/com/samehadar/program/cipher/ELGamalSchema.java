@@ -1,7 +1,7 @@
 package com.samehadar.program.cipher;
 
-import com.samehadar.program.hash.Subscriber;
 import com.samehadar.program.utils.KeyGen;
+import com.samehadar.program.utils.Subscriber;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;

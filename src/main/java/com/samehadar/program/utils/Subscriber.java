@@ -1,4 +1,4 @@
-package com.samehadar.program.hash;
+package com.samehadar.program.utils;
 
 /**
  * Interface that returns message digest
