@@ -61,6 +61,8 @@ public class Channel implements Runnable {
                     realizeProtocol_1_3();
                 } else if (message.equals("protocol_2_6")) {
                     realizeProtocol_2_6();
+                } else if (message.equals("protocol_3_3")) {
+                    realizeProtocol_3_3();
                 }
                 System.out.println(message);
             } catch (IOException e) {
@@ -76,6 +78,49 @@ public class Channel implements Runnable {
         packet.setSocketAddress(address);
 
         socket.send(packet);
+    }
+
+    //TODO::remove more sout after production
+    private void realizeProtocol_3_3() throws IOException {
+        System.out.println("Реализация протокола Woo-Lam(Боб)");
+
+        ELGamalSchema schema = new ELGamalSchema();
+        //BigInteger p = new BigInteger("11337409");
+        BigInteger p = BigInteger.probablePrime(64, schema.getSecureRandom());
+        BigInteger g = new BigInteger("3");
+        BigInteger x = BigInteger.probablePrime(25, schema.getSecureRandom());
+//        BigInteger x = new BigInteger("12345678901234567890");
+        Map<String, BigInteger> key = schema.generateKey(p , g, x);
+        List<String> openKey = new ArrayList<>();
+        openKey.add(key.get("p").toString());
+        openKey.add(key.get("g").toString());
+        openKey.add(key.get("y").toString());
+        System.out.println("Сгенерироли набор ключей: " + key);
+
+        Socket trentSocket = new Socket(Program.destinationIP, 9909);
+        BufferedReader trentReader = new BufferedReader(new InputStreamReader(trentSocket.getInputStream()));
+        PrintWriter trentWriter = new PrintWriter(trentSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение with Trent.");
+
+        List<String> trentOpenKey = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent открытые ключи: " + trentOpenKey);
+        trentWriter.println(Trent.createMessage(openKey));
+        System.out.println("Отправили to Trent открытые ключи: " + Trent.createMessage(openKey));
+
+        Socket aliceSocket = new Socket(Program.destinationIP, 9910);
+        BufferedReader aliceReader = new BufferedReader(new InputStreamReader(aliceSocket.getInputStream()));
+        PrintWriter aliceWriter = new PrintWriter(aliceSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение с Алисой.");
+
+
+
+        //closing streams
+        trentSocket.close();
+        trentReader.close();
+        trentWriter.close();
+        aliceSocket.close();
+        aliceReader.close();
+        aliceWriter.close();
     }
 
     //TODO::remove more sout after production

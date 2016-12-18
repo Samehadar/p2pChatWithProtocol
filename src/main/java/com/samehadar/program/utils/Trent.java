@@ -1,5 +1,6 @@
 package com.samehadar.program.utils;
 
+import com.samehadar.program.cipher.ELGamalSchema;
 import com.samehadar.program.cipher.VigenereWithoutMod;
 import com.samehadar.program.cipher.Cipher;
 
@@ -22,6 +23,7 @@ public class Trent implements Runnable {
 
     private static Trent trent;
     private Integer trentPort;
+    private String protocol;
 
     private static Random secureRandom;
     static {
@@ -50,6 +52,112 @@ public class Trent implements Runnable {
 
     @Override
     public void run() {
+        if (this.protocol.equals("protocol_2_6")) {
+            realizeProtocol_2_6();
+        } else if (this.protocol.equals("protocol_3_3")) {
+            realizeProtocol_3_3();
+        }
+    }
+
+    public void setTrentPort(Integer port) {
+        this.trentPort = port;
+    }
+
+    /**
+     * Setting protocol
+     * @param protocol name
+     */
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
+
+    public static String createMessage(List<String> strings, String ... args) {
+        return createMessage(strings) + createMessage(args);
+    }
+
+    public static String createMessage(String ... args) {
+        return createMessage(Arrays.asList(args));
+    }
+//TODO;; may be change to Map?
+    public static String createMessage(List<String> args) {
+        StringBuilder builder = new StringBuilder();
+        for (String arg : args) {
+            builder.append(arg).append("|");
+        }
+        return builder.toString();
+    }
+
+    public static List<String> parseMessage(String message) {
+        return Arrays.asList(message.split("\\|"));
+    }
+
+    public static Random getSecureRandom() {
+        return secureRandom;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        trent = null;
+        super.finalize();
+    }
+
+    private void realizeProtocol_3_3() {
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket(trentPort);
+            ELGamalSchema schema = new ELGamalSchema();
+            //BigInteger p = new BigInteger("11337409");
+            BigInteger p = BigInteger.probablePrime(64, schema.getSecureRandom());
+            BigInteger g = new BigInteger("3");
+            BigInteger x = BigInteger.probablePrime(25, schema.getSecureRandom());
+//            BigInteger x = new BigInteger("12345678901234567890");
+            Map<String, BigInteger> key = schema.generateKey(p , g, x);
+            List<String> openKey = new ArrayList<>();
+            openKey.add(key.get("p").toString());
+            openKey.add(key.get("g").toString());
+            openKey.add(key.get("y").toString());
+            System.out.println("Trent: enerated key set: " + key);
+            //accept Alice
+            Socket aliceSocket = serverSocket.accept();
+            BufferedReader aliceReader = new BufferedReader(new InputStreamReader(aliceSocket.getInputStream()));
+            PrintWriter aliceWriter = new PrintWriter(aliceSocket.getOutputStream(), true);
+            System.out.println("Trent: accepted Alice");
+            aliceWriter.println(createMessage(openKey));
+            System.out.println("Trent: send openKeys to Alice: " + openKey);
+            List<String> aliceOpenKey = parseMessage(aliceReader.readLine());
+            System.out.println("Trent: receive openKeys from Alice: " + aliceOpenKey);
+            //accept Bob
+            Socket bobSocket = serverSocket.accept();
+            BufferedReader bobReader = new BufferedReader(new InputStreamReader(bobSocket.getInputStream()));
+            PrintWriter bobWriter = new PrintWriter(bobSocket.getOutputStream(), true);
+            System.out.println("Trent: accepted Bob");
+            bobWriter.println(createMessage(openKey));
+            System.out.println("Trent: send openKeys to Bob: " + openKey);
+            List<String> bobOpenKey = parseMessage(bobReader.readLine());
+            System.out.println("Trent: receive openKeys from Bob: " + bobOpenKey);
+
+            //TODO:: need add structure "Message"
+//            List<String> nicknames = parseMessage(aliceReader.readLine());
+//            System.out.println("Trent: receive nicknames Alice and Bob: " + nicknames);
+//            aliceWriter.println();
+
+
+            //closing streams
+            serverSocket.close();
+            aliceSocket.close();
+            aliceReader.close();
+            aliceWriter.close();
+            bobSocket.close();
+            bobReader.close();
+            bobWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private void realizeProtocol_2_6() {
         try {
             //TODO::need to check timestamp validity (etc timeout)
             ServerSocket serverSocket = new ServerSocket(trentPort);
@@ -111,39 +219,5 @@ public class Trent implements Runnable {
         } catch (IOException e) {
             //TODO::
         }
-    }
-
-    public void setTrentPort(Integer port) {
-        this.trentPort = port;
-    }
-
-    public static String createMessage(List<String> strings, String ... args) {
-        return createMessage(strings) + createMessage(args);
-    }
-
-    public static String createMessage(String ... args) {
-        return createMessage(Arrays.asList(args));
-    }
-//TODO;; may be change to Map?
-    public static String createMessage(List<String> args) {
-        StringBuilder builder = new StringBuilder();
-        for (String arg : args) {
-            builder.append(arg).append("|");
-        }
-        return builder.toString();
-    }
-
-    public static List<String> parseMessage(String message) {
-        return Arrays.asList(message.split("\\|"));
-    }
-
-    public static Random getSecureRandom() {
-        return secureRandom;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        trent = null;
-        super.finalize();
     }
 }

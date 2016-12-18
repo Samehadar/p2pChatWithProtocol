@@ -1,6 +1,7 @@
 package com.samehadar.program.cipher;
 
 import com.samehadar.program.utils.KeyGen;
+import com.samehadar.program.utils.MessageUtils;
 import com.samehadar.program.utils.Subscriber;
 
 import java.math.BigInteger;
@@ -12,7 +13,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * ELGamalSchema is class, that cans be used how cipher and message subscriber
+ * {@link ELGamalSchema} is class, that cans be used how cipher and message subscriber based on ELGamal Schema
  */
 public class ELGamalSchema implements KeyGen<Map>, Cipher<Map, Map>, Subscriber<Map, Map> {
 
@@ -97,6 +98,40 @@ public class ELGamalSchema implements KeyGen<Map>, Cipher<Map, Map>, Subscriber<
         return ad.toString();
     }
 
+//    Вычисляется дайджест сообщения ~M: ~m = h(M).
+//    Выбирается случайное число ~1< k < p-1 взаимно простое с ~p - 1 и вычисляется ~r = g^k\,\bmod\,p.
+//    Вычисляется число  s \, \equiv \, (m-x r)k^{-1} \pmod{p-1}.
+//    Подписью сообщения ~M является пара \left( r,s \right).
+    @Override
+    public Map subscribeMessage(String message, Map key) {
+        Map<String, BigInteger> keys = key;
+        //m  = h(M)
+        BigInteger messageDigest = new BigInteger(MessageUtils.md5Custom(message), 16);
+
+        //1 < k < p - 1
+        BigInteger k;
+        do {
+            k = createBigIntegerLowThanP(keys.get("p"));
+        } while (k.gcd(k).equals(BigInteger.ONE));
+
+        // r = g^k mod p
+        BigInteger r = exp(keys.get("g"), k, keys.get("p"));
+
+        //k^(-1)
+        BigInteger kInvert = k.modInverse(keys.get("p"));
+
+        //s=(m-x*r)*(k^(-1)) mod (p-1)
+        BigInteger s = messageDigest.subtract(keys.get("x").multiply(r)).multiply(kInvert).mod(keys.get("p").subtract(BigInteger.ONE));
+
+        //sub is (r, s)
+        Map<String, String> result = new HashMap<String, String>() {{
+            put("message", message);
+            put("r", r.toString());
+            put("s", s.toString());
+        }};
+        return result;
+    }
+
     public String concatenateCipherText(Map<String, BigInteger> ab) {
         return ab.get("a") + "|" + ab.get("b");
     }
@@ -127,64 +162,6 @@ public class ELGamalSchema implements KeyGen<Map>, Cipher<Map, Map>, Subscriber<
             return new BigInteger((String)x);
         }
         return null;
-    }
-
-//    Вычисляется дайджест сообщения ~M: ~m = h(M).
-//    Выбирается случайное число ~1< k < p-1 взаимно простое с ~p - 1 и вычисляется ~r = g^k\,\bmod\,p.
-//    Вычисляется число  s \, \equiv \, (m-x r)k^{-1} \pmod{p-1}.
-//    Подписью сообщения ~M является пара \left( r,s \right).
-    @Override
-    public Map subscribeMessage(String message, Map key) {
-        Map<String, BigInteger> keys = key;
-        //m  = h(M)
-        BigInteger messageDigest = new BigInteger(md5Custom(message), 16);
-
-        //1 < k < p - 1
-        BigInteger k;
-        do {
-            k = createBigIntegerLowThanP(keys.get("p"));
-        } while (k.gcd(k).equals(BigInteger.ONE));
-
-        // r = g^k mod p
-        BigInteger r = exp(keys.get("g"), k, keys.get("p"));
-
-        //k^(-1)
-        BigInteger kInvert = k.modInverse(keys.get("p"));
-
-        //s=(m-x*r)*(k^(-1)) mod (p-1)
-        BigInteger s = messageDigest.subtract(keys.get("x").multiply(r)).multiply(kInvert).mod(keys.get("p").subtract(BigInteger.ONE));
-
-        //sub is (r, s)
-        Map<String, String> result = new HashMap<String, String>() {{
-            put("message", message);
-            put("r", r.toString());
-            put("s", s.toString());
-        }};
-        return result;
-    }
-
-    //can be replaced by Apache Common Codec in future
-    private String md5Custom(String message) {
-        MessageDigest messageDigest;
-        byte[] digest = new byte[0];
-
-        try {
-            messageDigest = MessageDigest.getInstance("MD5");
-            messageDigest.reset();
-            messageDigest.update(message.getBytes());
-            digest = messageDigest.digest();
-        } catch (NoSuchAlgorithmException e) {
-            // TODO:: exception trowed when algorithm in getInstance(...) is not exist
-            e.printStackTrace();
-        }
-
-        BigInteger bigInt = new BigInteger(1, digest);
-        String md5Hex = bigInt.toString(16);
-
-        while( md5Hex.length() < 32 ){
-            md5Hex = "0" + md5Hex;
-        }
-        return md5Hex;
     }
 
     /*

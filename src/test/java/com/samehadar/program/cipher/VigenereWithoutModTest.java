@@ -38,4 +38,12 @@ public class VigenereWithoutModTest {
         System.out.println(openText);
     }
 
+    @Test
+    public void Should_CorrectEncAndDecMessage_UsedRandomKey() {
+        String key = vigenere.generateKey(30);
+        String cipherText = vigenere.encrypt("It's very secret and important message!", key);
+        String openText = vigenere.decrypt(cipherText, key);
+        assertEquals("It's very secret and important message!", openText);
+        System.out.println(openText);
+    }
 }

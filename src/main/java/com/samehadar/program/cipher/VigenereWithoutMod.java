@@ -1,11 +1,22 @@
 package com.samehadar.program.cipher;
 
-/**
- * TODO:: add comments
- */
-public class VigenereWithoutMod implements Cipher<String, String> {
+import com.samehadar.program.utils.KeyGen;
 
-    public VigenereWithoutMod() {}
+import java.math.BigInteger;
+import java.security.SecureRandom;
+import java.util.Random;
+
+/**
+ * {@link VigenereWithoutMod} is class, that cans be used how cipher and message subscriber
+ *  based on VigenereCipher algorithm without "mod"
+ */
+public class VigenereWithoutMod implements Cipher<String, String>, KeyGen<String> {
+
+    private Random secureRandom;
+
+    public VigenereWithoutMod() {
+        this.secureRandom = new SecureRandom();
+    }
 
     @Override
     public String encrypt(String openText, String key) {
@@ -37,4 +48,8 @@ public class VigenereWithoutMod implements Cipher<String, String> {
         }
     }
 
+    @Override
+    public String generateKey(Object... args) {
+        return new BigInteger((Integer)args[0], this.secureRandom).toString();
+    }
 }

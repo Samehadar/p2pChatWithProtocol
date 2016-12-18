@@ -14,10 +14,7 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class Program {
     static Channel channel;
@@ -60,6 +57,8 @@ public class Program {
                 realizeProtocol_1_3();
             } else if (message.equals("$server protocol_2_6")) {
                 realizeProtocol_2_6();
+            } else if (message.equals("$server protocol_3_3")) {
+                realizeProtocol_3_3();
             }
 
             message = nickname + " >> " + message;
@@ -73,6 +72,62 @@ public class Program {
         System.out.println("Shut down.");
     }
 
+    public static void realizeProtocol_3_3() throws IOException {
+        System.out.println("Реализация протокола Woo-Lam(Алиса)");
+        //TODO:: change it(and all time stamp wood be receive from Trent) if Trent wood be standalone app
+        String trentIP = "127.0.0.1";
+        Integer trentPort = 9909;
+        Trent trent = Trent.getInstance();
+        trent.setTrentPort(trentPort);
+        trent.setProtocol("protocol_3_3");
+        trent.start();
+        System.out.println("Trent: I'm wake up");
+
+        ELGamalSchema schema = new ELGamalSchema();
+        //BigInteger p = new BigInteger("11337409");
+        BigInteger p = BigInteger.probablePrime(64, schema.getSecureRandom());
+        BigInteger g = new BigInteger("3");
+        //BigInteger x = BigInteger.probablePrime(25, schema.getSecureRandom());
+        BigInteger x = new BigInteger("12345678901234567890");
+        Map<String, BigInteger> key = schema.generateKey(p , g, x);
+        List<String> openKey = new ArrayList<>();
+        openKey.add(key.get("p").toString());
+        openKey.add(key.get("g").toString());
+        openKey.add(key.get("y").toString());
+        System.out.println("Сгенерироли набор ключей: " + key);
+
+        Socket trentSocket = new Socket(trentIP, trentPort);
+        BufferedReader trentReader = new BufferedReader(new InputStreamReader(trentSocket.getInputStream()));
+        PrintWriter trentWriter = new PrintWriter(trentSocket.getOutputStream(), true);
+        System.out.println("Added connection with Trent");
+        List<String> trentOpenKey = Trent.parseMessage(trentReader.readLine());
+        System.out.println("Получили from Trent открытые ключи: " + trentOpenKey);
+        trentWriter.println(Trent.createMessage(openKey));
+        System.out.println("Отправили to Trent открытые ключи: " + Trent.createMessage(openKey));
+
+        channel.sendTo(address, "protocol_3_3");
+
+        Integer bobPort = 9910;
+        ServerSocket bobServerSocket = new ServerSocket(bobPort);
+        Socket bobSocket = bobServerSocket.accept();
+        BufferedReader bobReader = new BufferedReader(new InputStreamReader(bobSocket.getInputStream()));
+        PrintWriter bobWriter = new PrintWriter(bobSocket.getOutputStream(), true);
+        System.out.println("Установлено тайное соединение с Бобом");
+
+
+        //closing streams
+        trentSocket.close();
+        trentReader.close();
+        trentWriter.close();
+        bobServerSocket.close();
+        bobSocket.close();
+        bobReader.close();
+        bobWriter.close();
+    }
+
+
+
+
     public static void realizeProtocol_2_6() throws IOException {
         System.out.println("Реализация протокола Neuman-Stubblebine(Алиса)");
         //TODO:: change it(and all time stamp wood be receive from Trent) if Trent wood be standalone app
@@ -80,6 +135,7 @@ public class Program {
         Integer trentPort = 9909;
         Trent trent = Trent.getInstance();
         trent.setTrentPort(trentPort);
+        trent.setProtocol("protocol_2_6");
         trent.start();
         System.out.println("Trent: I'm wake up");
 
