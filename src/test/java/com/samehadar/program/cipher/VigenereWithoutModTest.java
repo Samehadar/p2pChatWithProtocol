@@ -9,31 +9,31 @@ import static org.junit.Assert.*;
  * Created by User on 16.12.2016.
  */
 public class VigenereWithoutModTest {
-    VigenereWithoutMod cesar;
+    VigenereWithoutMod vigenere;
 
     @Before
     public void setUp() throws Exception {
-        cesar = new VigenereWithoutMod();
+        vigenere = new VigenereWithoutMod();
     }
 
     @Test
     public void Should_TrueEncryptMessage() {
-        String result = cesar.encrypt("123", "mes");
+        String result = vigenere.encrypt("mes", "123");
         assertEquals("\u009E\u0097¦", result);
         System.out.println(result);
     }
 
     @Test
     public void Should_TrueDecryptMessage() {
-        String openText = cesar.decrypt("123", "\u009E\u0097¦");
+        String openText = vigenere.decrypt("\u009E\u0097¦", "123");
         assertEquals("mes", openText);
         System.out.println(openText);
     }
 
     @Test
     public void Should_CorrectEncAndDecMessage() {
-        String cipherText = cesar.encrypt("123123456456", "It's very secret and important message!");
-        String openText = cesar.decrypt("123123456456", cipherText);
+        String cipherText = vigenere.encrypt("It's very secret and important message!", "123123456456");
+        String openText = vigenere.decrypt(cipherText, "123123456456");
         assertEquals("It's very secret and important message!", openText);
         System.out.println(openText);
     }

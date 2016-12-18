@@ -23,7 +23,7 @@ public class CipherUtilsTest {
     public void Should_CipherForEachString() {
         vigenere = new VigenereWithoutMod();
         String key = "123";
-        List<String> strings = Arrays.asList("bdf", "\u0092 ¬", "\u0092 ¬", "\u0092 ¬");
+        List<String> strings = Arrays.asList("bdf", "\u0092 ¬|\u0097¬", "\u0092 ¬", "\u0092 ¬c");
         List<String> result = CipherUtils.encryptionForEach(vigenere, Arrays.asList("123", "anyKey", "any", "any2"), key);
         assertEquals(strings, result);
         System.out.println(result);
