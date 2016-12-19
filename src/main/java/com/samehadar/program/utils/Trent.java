@@ -111,12 +111,12 @@ public class Trent implements Runnable {
             BigInteger g = new BigInteger("3");
             BigInteger x = BigInteger.probablePrime(25, schema.getSecureRandom());
 //            BigInteger x = new BigInteger("12345678901234567890");
-            Map<String, BigInteger> key = schema.generateKey(p , g, x);
+            Map<String, BigInteger> keys = schema.generateKey(p , g, x);
             List<String> openKey = new ArrayList<>();
-            openKey.add(key.get("p").toString());
-            openKey.add(key.get("g").toString());
-            openKey.add(key.get("y").toString());
-            System.out.println("Trent: enerated key set: " + key);
+            openKey.add(keys.get("p").toString());
+            openKey.add(keys.get("g").toString());
+            openKey.add(keys.get("y").toString());
+            System.out.println("Trent: enerated key set: " + keys);
             //accept Alice
             Socket aliceSocket = serverSocket.accept();
             BufferedReader aliceReader = new BufferedReader(new InputStreamReader(aliceSocket.getInputStream()));
@@ -137,10 +137,11 @@ public class Trent implements Runnable {
             System.out.println("Trent: receive openKeys from Bob: " + bobOpenKey);
 
             //TODO:: need add structure "Message"
-//            List<String> nicknames = parseMessage(aliceReader.readLine());
-//            System.out.println("Trent: receive nicknames Alice and Bob: " + nicknames);
-//            aliceWriter.println();
+            List<String> nicknames = parseMessage(aliceReader.readLine());
+            System.out.println("Trent: receive nicknames Alice and Bob: " + nicknames);
+            aliceWriter.println(schema.subscribeMessage(Trent.createMessage(bobOpenKey), keys).get("message"));
 
+            System.out.println("Trent: send Alice: " + schema.subscribeMessage(Trent.createMessage(bobOpenKey), keys).get("message"));
 
             //closing streams
             serverSocket.close();

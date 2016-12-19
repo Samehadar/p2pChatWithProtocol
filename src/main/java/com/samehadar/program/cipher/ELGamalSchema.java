@@ -15,7 +15,7 @@ import java.util.Random;
 /**
  * {@link ELGamalSchema} is class, that cans be used how cipher and message subscriber based on ELGamal Schema
  */
-public class ELGamalSchema implements KeyGen<Map>, Cipher<Map, Map>, Subscriber<Map, Map> {
+public class ELGamalSchema implements KeyGen<Map>, Cipher<Map, Map>, Subscriber<Map<String, String>, Map<String, BigInteger>> {
 
     private BigInteger p;
     private BigInteger g;
@@ -103,7 +103,7 @@ public class ELGamalSchema implements KeyGen<Map>, Cipher<Map, Map>, Subscriber<
 //    Вычисляется число  s \, \equiv \, (m-x r)k^{-1} \pmod{p-1}.
 //    Подписью сообщения ~M является пара \left( r,s \right).
     @Override
-    public Map subscribeMessage(String message, Map key) {
+    public Map<String, String> subscribeMessage(String message, Map<String, BigInteger> key) {
         Map<String, BigInteger> keys = key;
         //m  = h(M)
         BigInteger messageDigest = new BigInteger(MessageUtils.md5Custom(message), 16);
